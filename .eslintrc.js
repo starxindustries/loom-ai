@@ -1,0 +1,16 @@
+module.exports = {
+  extends: [],
+  rules: {},
+  env: {
+    browser: true,
+    es2021: true,
+    node: true
+  },
+  parserOptions: {
+    ecmaVersion: "latest",
+    sourceType: "module"
+  },
+  ignorePatterns: [
+    "**/*"
+  ]
+};
