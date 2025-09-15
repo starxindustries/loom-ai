@@ -58,6 +58,12 @@ export const useChat = () => {
         content: msg.content,
       }));
 
+      console.log('📤 Sending messages to API:', apiMessages.map((msg, index) => ({
+        index,
+        role: msg.role,
+        content: msg.content.substring(0, 100) + (msg.content.length > 100 ? '...' : ''),
+      })));
+
       // Create new abort controller
       abortControllerRef.current = new AbortController();
 
