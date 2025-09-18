@@ -1,3 +1,4 @@
+// memory API
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { addMemory, addMemoriesBatch, searchMemories } from "@/lib/memory";

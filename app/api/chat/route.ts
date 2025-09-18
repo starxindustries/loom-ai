@@ -1,3 +1,4 @@
+// chat API
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";

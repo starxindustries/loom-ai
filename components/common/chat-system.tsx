@@ -185,7 +185,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({
   // Show initial prompt interface when no messages
   if (messages.length === 0) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
+      <div className="flex min-h-screen w-full flex-col items-center justify-center p-4 z-50">
         <motion.div
           initial={{ opacity: 0, y: 15, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

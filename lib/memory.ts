@@ -1,3 +1,4 @@
+// search memory
 import { createClient } from "@/lib/supabase/server";
 import { Memory, MemorySearchResult } from "@/types/memory";
 import OpenAI from "openai";
