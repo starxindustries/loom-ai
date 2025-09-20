@@ -404,7 +404,7 @@ export const PromptBox = React.forwardRef<
   return (
     <div
       className={cn(
-        "flex flex-col rounded-[28px] p-2 shadow-sm transition-colors bg-white border dark:bg-[#303030] dark:border-transparent cursor-text",
+        "flex flex-col rounded-[28px] p-2 shadow-lg transition-colors bg-white border dark:bg-[#303030] dark:border-transparent cursor-text",
         className
       )}
     >

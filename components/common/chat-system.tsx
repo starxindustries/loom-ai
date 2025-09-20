@@ -70,9 +70,9 @@ const MessageBubble: React.FC<{
 
         {/* Message Content */}
         <div
-          className={`px-4 py-3 rounded-lg ${
+          className={`px-4 py-3 rounded-lg shadow-lg ${
             isUser
-              ? "bg-muted text-foreground"
+              ? "bg-muted text-foreground border border-primary/30"
               : "bg-background border text-foreground"
           }`}
         >
@@ -220,7 +220,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({
 
   // Show chat interface when there are messages
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background mt-14">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
         <div className="max-w-6xl mx-auto">
@@ -240,10 +240,10 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="fixed  bottom-0 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-xl">
         <div className="max-w-6xl mx-auto px-6 py-4">
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-2 mb-3">
+          {/* <div className="flex items-center justify-end gap-2 mb-3">
             {isLoading && onStopGeneration && (
               <Button
                 variant="outline"
@@ -266,9 +266,9 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({
                 Clear
               </Button>
             )}
-          </div>
+          </div> */}
 
-          <div className="flex items-end gap-3">
+          <div className="flex items-end gap-3 items-center justify-center">
             <div className="flex-1">
               <textarea
                 ref={textareaRef}

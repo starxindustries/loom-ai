@@ -1,7 +1,7 @@
 // pages/encrypted-chat.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldIcon,
@@ -26,13 +26,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 import { useEncryptedChat } from "@/hooks/useEncryptedChat";
-import { MemoryEncryption } from "@/lib/crypto";
+import { MemoryEncryption, PassphraseManager } from "@/lib/crypto";
 import { ChatSystem } from "@/components/common/chat-system";
+import { UserProfile } from "@/types";
 
 export default function EncryptedChatPage() {
   const {
@@ -58,6 +66,7 @@ export default function EncryptedChatPage() {
     passphrase,
     setPassphrase,
     hasStoredPassphrase,
+    updateUserProfile,
   } = useEncryptedChat({
     enableEncryption: true, // Always use encryption
     autoSaveMemories: true,
@@ -66,18 +75,18 @@ export default function EncryptedChatPage() {
 
   const [showPassphrase, setShowPassphrase] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [isSetupMode, setIsSetupMode] = useState(false);
   const [generatedPassphrase, setGeneratedPassphrase] = useState<string | null>(null);
   const [restoreFile, setRestoreFile] = useState<File | null>(null);
+  const [showRecoveryKeysPopup, setShowRecoveryKeysPopup] = useState(false);
 
   // Handle encryption setup with auto-generated passphrase
-  const handleSetupEncryption = async () => {
+  const handleSetupEncryption = useCallback(async () => {
     const result = await setupEncryption();
     if (result.success && result.passphrase) {
       setGeneratedPassphrase(result.passphrase);
-      // Keep setup mode open to show the generated passphrase and download backup
+      setShowRecoveryKeysPopup(true);
     }
-  };
+  }, [setupEncryption]);
 
   // Handle session initialization (usually automatic now)
   const handleUnlockSession = async () => {
@@ -93,7 +102,6 @@ export default function EncryptedChatPage() {
       const success = await restoreFromBackup(restoreFile);
       if (success) {
         setRestoreFile(null);
-        setIsSetupMode(false);
       }
     }
   };
@@ -101,17 +109,40 @@ export default function EncryptedChatPage() {
   // Reset setup state when encryption is no longer required
   useEffect(() => {
     if (!encryptionSetupRequired) {
-      setIsSetupMode(false);
       setGeneratedPassphrase(null);
-    }
+  }
   }, [encryptionSetupRequired]);
 
-  // Show encryption setup if required (encryption is always enabled)
+  // Check if we need to show recovery keys popup for new users
   useEffect(() => {
-    if (encryptionSetupRequired && !isSetupMode) {
-      setIsSetupMode(true);
+    const checkRecoveryKeysPopup = () => {
+      const hasStoredPassphraseValue = hasStoredPassphrase();
+      
+      // Show popup if:
+      // 1. User has a stored passphrase (auto-generated)
+      // 2. User is logged in (session active)
+      // 3. User is marked as new in database (hasn't downloaded recovery keys yet)
+      if (hasStoredPassphraseValue && isSessionActive && userProfile?.is_new) {
+        const storedPassphrase = PassphraseManager.getStoredPassphrase();
+        if (storedPassphrase) {
+          setGeneratedPassphrase(storedPassphrase);
+          setShowRecoveryKeysPopup(true);
+        }
+      }
+    };
+
+    // Small delay to ensure session is fully initialized
+    if (isSessionActive && !isInitializing && userProfile) {
+      setTimeout(checkRecoveryKeysPopup, 1000);
     }
-  }, [encryptionSetupRequired, isSetupMode]);
+  }, [isSessionActive, isInitializing, hasStoredPassphrase, userProfile?.is_new]);
+
+  // Auto-trigger encryption setup for new users
+  useEffect(() => {
+    if (encryptionSetupRequired) {
+      handleSetupEncryption();
+    }
+  }, [encryptionSetupRequired, handleSetupEncryption]);
 
   // Show loading screen during initialization
   if (isInitializing) {
@@ -141,9 +172,9 @@ export default function EncryptedChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="fixed  top-0 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -169,19 +200,6 @@ export default function EncryptedChatPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Session Controls */}
-              {isSessionActive ? (
-                <Button onClick={clearSession} variant="outline" size="sm">
-                  <LockIcon className="h-4 w-4 mr-2" />
-                  Lock Session
-                </Button>
-              ) : (
-                <Badge variant="outline" className="text-amber-600">
-                  <KeyIcon className="h-3 w-3 mr-1" />
-                  Session Locked
-                </Badge>
-              )}
-
               {/* Settings */}
               <Button
                 variant="outline"
@@ -212,239 +230,104 @@ export default function EncryptedChatPage() {
         )}
       </AnimatePresence>
 
-      {/* Settings Panel */}
-      <AnimatePresence>
-        {showSettings && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="border-b bg-muted/30"
-          >
-            <div className="max-w-6xl mx-auto px-6 py-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Encryption Settings</CardTitle>
-                  <CardDescription>
-                    Configure your end-to-end encryption preferences
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {userProfile ? (
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Algorithm:</span>
-                        <span className="ml-2">
-                          {userProfile.kdf_algorithm.toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Iterations:</span>
-                        <span className="ml-2">
-                          {userProfile.kdf_iterations.toLocaleString()}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Auto-logout:</span>
-                        <span className="ml-2">
-                          {userProfile.auto_logout_minutes} minutes
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium">Session:</span>
-                        <span className="ml-2">
-                          {isSessionActive ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground">
-                      Encryption profile not configured
-                    </p>
-                  )}
-
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p>• Messages are encrypted using AES-256-GCM</p>
-                    <p>• Your encryption key is auto-generated and stored locally</p>
-                    <p>• End-to-end encryption ensures complete privacy</p>
-                    <p>• Backup file available for device recovery</p>
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldIcon className="h-5 w-5" />
+              Encryption Settings
+            </DialogTitle>
+            <DialogDescription>
+              View your encryption configuration and manage recovery options
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Encryption Profile Info */}
+            {userProfile ? (
+              <div className="space-y-3">
+                <h4 className="text-sm font-medium">Encryption Profile</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm bg-muted/50 p-3 rounded-lg">
+                  <div>
+                    <span className="font-medium">Algorithm:</span>
+                    <span className="ml-2">
+                      {userProfile.kdf_algorithm.toUpperCase()}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
+                  <div>
+                    <span className="font-medium">Iterations:</span>
+                    <span className="ml-2">
+                      {userProfile.kdf_iterations.toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Auto-logout:</span>
+                    <span className="ml-2">
+                      {userProfile.auto_logout_minutes} minutes
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Session:</span>
+                    <span className="ml-2">
+                      {isSessionActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Alert>
+                <AlertTriangleIcon className="h-4 w-4" />
+                <AlertDescription>
+                  Encryption profile not configured
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Separator />
+            
+            {/* Recovery Options */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Recovery Options</h4>
+              <Button
+                onClick={async () => {
+                  await downloadBackup();
+                  setShowSettings(false);
+                }}
+                variant="outline"
+                className="w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download Recovery Key Backup
+              </Button>
+              
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>• Download your recovery key backup file</p>
+                <p>• Keep it safe - needed to recover data on new devices</p>
+                <p>• Your key is also stored securely on this device</p>
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
-      {/* Encryption Setup Modal */}
-      <AnimatePresence>
-        {isSetupMode && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-background rounded-lg shadow-xl max-w-md w-full"
-            >
-              <Card className="border-0">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <KeyIcon className="h-5 w-5" />
-                    Setup Secure Memory
-                  </CardTitle>
-                  <CardDescription>
-                    We'll auto-generate a secure encryption key for your memories
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Alert>
-                    <AlertTriangleIcon className="h-4 w-4" />
-                    <AlertDescription>
-                      <strong>Important:</strong> Download the backup file after setup. 
-                      It's the only way to recover your encrypted memories if you switch devices.
-                    </AlertDescription>
-                  </Alert>
+            <Separator />
 
-                  {generatedPassphrase ? (
-                    <div className="space-y-3">
-                      <div className="bg-muted p-3 rounded-lg">
-                        <label className="text-sm font-medium text-green-700 dark:text-green-400">
-                          🎉 Your secure key has been generated!
-                        </label>
-                        <div className="mt-2 font-mono text-sm bg-background p-2 rounded border">
-                          {showPassphrase ? generatedPassphrase : "••••••••••••••••••••••••••••••••••••••"}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="mt-2"
-                          onClick={() => setShowPassphrase(!showPassphrase)}
-                        >
-                          {showPassphrase ? (
-                            <>
-                              <EyeOffIcon className="h-4 w-4 mr-2" />
-                              Hide Key
-                            </>
-                          ) : (
-                            <>
-                              <EyeIcon className="h-4 w-4 mr-2" />
-                              Show Key
-                            </>
-                          )}
-                        </Button>
-                      </div>
+            {/* Security Info */}
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Security Information</h4>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>• Messages are encrypted using AES-256-GCM</p>
+                <p>• Your encryption key is auto-generated and stored locally</p>
+                <p>• End-to-end encryption ensures complete privacy</p>
+                <p>• Only you can decrypt your data</p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-                      <Button
-                        onClick={downloadBackup}
-                        className="w-full"
-                        variant="outline"
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Backup File
-                      </Button>
-
-                      <div className="text-xs text-muted-foreground space-y-1">
-                        <p>✅ Key stored securely on this device</p>
-                        <p>📁 Backup file contains your recovery key</p>
-                        <p>🔒 Keep backup file safe and private</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="text-center py-4">
-                        <p className="text-muted-foreground mb-4">
-                          We'll create a secure 128-bit encryption key using cryptographically 
-                          secure random generation. This key will be stored safely on your device.
-                        </p>
-                        
-                        <div className="text-xs text-muted-foreground space-y-1 mb-4">
-                          <p>🔐 Military-grade AES-256-GCM encryption</p>
-                          <p>🛡️ Zero-knowledge architecture</p>
-                          <p>📱 Key never leaves your device</p>
-                        </div>
-                      </div>
-
-                      {/* Restore from backup option */}
-                      <div className="border-t pt-4">
-                        <label className="text-sm font-medium">
-                          Or restore from backup file:
-                        </label>
-                        <div className="mt-2 flex gap-2">
-                          <Input
-                            type="file"
-                            accept=".json"
-                            onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
-                            className="flex-1"
-                          />
-                          <Button
-                            onClick={handleRestoreFromBackup}
-                            disabled={!restoreFile || isLoading}
-                            variant="outline"
-                            size="sm"
-                          >
-                            <Upload className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    {generatedPassphrase ? (
-                      <Button
-                        onClick={() => {
-                          setIsSetupMode(false);
-                          setGeneratedPassphrase(null);
-                        }}
-                        className="flex-1"
-                      >
-                        Start Using Secure Memory
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={() => setIsSetupMode(false)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          onClick={handleSetupEncryption}
-                          disabled={isLoading}
-                          className="flex-1"
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2Icon className="h-4 w-4 mr-2 animate-spin" />
-                              Generating Key...
-                            </>
-                          ) : (
-                            <>
-                              <KeyIcon className="h-4 w-4 mr-2" />
-                              Generate Secure Key
-                            </>
-                          )}
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Session Unlock Modal */}
       <AnimatePresence>
-        {!isSessionActive && !isSetupMode && (
+        {!isSessionActive && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -511,6 +394,29 @@ export default function EncryptedChatPage() {
                     )}
                     Unlock Session
                   </Button>
+
+                  {/* Restore from backup option */}
+                  <div className="border-t pt-4">
+                    <label className="text-sm font-medium text-muted-foreground">
+                      Or restore from backup file:
+                    </label>
+                    <div className="mt-2 flex gap-2">
+                      <Input
+                        type="file"
+                        accept=".json"
+                        onChange={(e) => setRestoreFile(e.target.files?.[0] || null)}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={handleRestoreFromBackup}
+                        disabled={!restoreFile || isLoading}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <Upload className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -519,7 +425,7 @@ export default function EncryptedChatPage() {
       </AnimatePresence>
 
       {/* Main Chat Interface */}
-      <div className="flex-1">
+      <div className="flex-1 pt-14">
         {isSessionActive ? (
           <ChatSystem
             messages={messages}
@@ -533,23 +439,142 @@ export default function EncryptedChatPage() {
             <Card className="max-w-md">
               <CardContent className="p-8 text-center">
                 <LockIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">Session Locked</h3>
+                <h3 className="text-lg font-medium mb-2">Session Initializing</h3>
                 <p className="text-muted-foreground mb-4">
-                  Enter your passphrase to start an encrypted conversation
+                  Your encrypted session is being prepared...
                 </p>
-                <Button onClick={() => setShowSettings(true)} variant="outline">
-                  <KeyIcon className="h-4 w-4 mr-2" />
-                  Unlock Session
-                </Button>
+                <div className="text-xs text-muted-foreground">
+                  <p>If this persists, you may need to restore from backup</p>
+                </div>
               </CardContent>
             </Card>
           </div>
         )}
       </div>
 
-      {/* Status Bar - Always show since encryption is always enabled */}
-      <div className="border-t bg-muted/30">
-        <div className="max-w-6xl mx-auto px-6 py-2">
+      {/* Recovery Keys Popup for Auto-Generated Passphrase */}
+      <AnimatePresence>
+        {showRecoveryKeysPopup && generatedPassphrase && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-background rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto"
+            >
+              <div className="space-y-6">
+                {/* Header */}
+                <div className="text-center">
+                  <ShieldIcon className="h-12 w-12 text-green-600 mx-auto mb-3" />
+                  <h2 className="text-xl font-semibold">🎉 Welcome to Secure Encryption!</h2>
+                  <p className="text-muted-foreground text-sm mt-2">
+                    Your account is now protected with military-grade end-to-end encryption.
+                  </p>
+                </div>
+
+                {/* Two-column layout for better space usage */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Left column - Info */}
+                  <div className="space-y-4">
+                    <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                      <h3 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">
+                        📱 Access Your Data Anywhere
+                      </h3>
+                      <p className="text-xs text-blue-800 dark:text-blue-200">
+                        Your recovery key allows you to securely access your encrypted data when logging in from a new device, browser, or after clearing your browser data.
+                      </p>
+                    </div>
+
+                    <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/20">
+                      <AlertTriangleIcon className="h-4 w-4 text-amber-600" />
+                      <AlertDescription className="text-amber-800 dark:text-amber-200">
+                        <strong>Please save your recovery key:</strong> We've generated a secure backup file for you. This is the only way to recover your encrypted data if you lose access to this device.
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <p>💡 <strong>Security Tips:</strong></p>
+                      <p>• Store your backup file in a secure location (cloud storage, password manager)</p>
+                      <p>• This key encrypts all your conversations and memories</p>
+                      <p>• We cannot recover your data without this key - it's that secure!</p>
+                      <p>• You can always download it later from Settings</p>
+                    </div>
+                  </div>
+
+                  {/* Right column - Recovery Key */}
+                  <div className="space-y-4">
+                    <div className="bg-muted p-4 rounded-lg">
+                      <label className="text-sm font-medium text-green-700 dark:text-green-400">
+                        Your Recovery Key:
+                      </label>
+                      <div className="mt-2 font-mono text-sm bg-background p-3 rounded border break-all">
+                        {showPassphrase ? generatedPassphrase : "••••••••••••••••••••••••••••••••••••••"}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => setShowPassphrase(!showPassphrase)}
+                      >
+                        {showPassphrase ? (
+                          <>
+                            <EyeOffIcon className="h-4 w-4 mr-2" />
+                            Hide Key
+                          </>
+                        ) : (
+                          <>
+                            <EyeIcon className="h-4 w-4 mr-2" />
+                            Show Key
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Button
+                        onClick={async () => {
+                          // Download backup and update state immediately
+                          await downloadBackup();
+                          setShowRecoveryKeysPopup(false);
+                          setGeneratedPassphrase(null);
+                        }}
+                        className="w-full"
+                        variant="default"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download My Recovery Key
+                      </Button>
+
+                      <Button
+                        onClick={() => {
+                          // Just close popup, don't update database
+                          // User will see popup again on next login/reload until they download
+                          setShowRecoveryKeysPopup(false);
+                          setGeneratedPassphrase(null);
+                        }}
+                        className="w-full"
+                        variant="outline"
+                      >
+                        I'll Download Later
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Status Bar - Always show since encryption is always enabled
+      <div className="border-t bg-muted/30 fixed bottom-0 w-full">
+        <div className="py-2 px-4">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1">
@@ -575,7 +600,7 @@ export default function EncryptedChatPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

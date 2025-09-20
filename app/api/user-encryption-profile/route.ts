@@ -1,39 +1,11 @@
 // app/api/user-encryption-profile/route.ts
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-
-export interface UserEncryptionProfile {
-  user_id: string;
-  kdf_algorithm: string;
-  kdf_iterations: number;
-  master_salt: string;
-  require_passphrase_verification: boolean;
-  auto_logout_minutes: number;
-  max_failed_attempts: number;
-  recovery_hint?: string;
-  created_at: string;
-  updated_at: string;
-  last_passphrase_change: string;
-}
-
-export interface CreateProfileRequest {
-  kdf_algorithm?: 'pbkdf2' | 'argon2id';
-  kdf_iterations?: number;
-  require_passphrase_verification?: boolean;
-  auto_logout_minutes?: number;
-  max_failed_attempts?: number;
-  recovery_hint?: string;
-}
-
-export interface UpdateProfileRequest {
-  kdf_algorithm?: 'pbkdf2' | 'argon2id';
-  kdf_iterations?: number;
-  require_passphrase_verification?: boolean;
-  auto_logout_minutes?: number;
-  max_failed_attempts?: number;
-  recovery_hint?: string;
-  regenerate_master_salt?: boolean;
-}
+import { 
+  UserEncryptionProfile, 
+  CreateProfileRequest, 
+  UpdateProfileRequest 
+} from "@/types/encryption";
 
 /**
  * GET - Retrieve user encryption profile
@@ -217,6 +189,7 @@ export async function POST(request: NextRequest) {
         auto_logout_minutes: autoLogoutMinutes,
         max_failed_attempts: maxFailedAttempts,
         recovery_hint: body.recovery_hint || null,
+        is_new: true, // New users need to see recovery keys dialog
       })
       .select()
       .single();
@@ -331,6 +304,7 @@ export async function PUT(request: NextRequest) {
     if (body.auto_logout_minutes !== undefined) updateData.auto_logout_minutes = body.auto_logout_minutes;
     if (body.max_failed_attempts !== undefined) updateData.max_failed_attempts = body.max_failed_attempts;
     if (body.recovery_hint !== undefined) updateData.recovery_hint = body.recovery_hint;
+    if (body.is_new !== undefined) updateData.is_new = body.is_new;
 
     // Regenerate master salt if requested (WARNING: This will invalidate all existing memories)
     if (body.regenerate_master_salt) {

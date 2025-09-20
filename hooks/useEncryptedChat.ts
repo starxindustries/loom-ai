@@ -1,6 +1,10 @@
 // hooks/useEncryptedChat.ts
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Message } from "@/types";
+import { 
+  EncryptedMessage, 
+  EncryptedChatOptions, 
+  UserProfile 
+} from "@/types";
 import {
   memoryEncryption,
   secureSession,
@@ -10,35 +14,6 @@ import {
   CryptoError,
   DecryptionError,
 } from "@/lib/crypto";
-
-export interface EncryptedChatOptions {
-  enableEncryption?: boolean;
-  autoSaveMemories?: boolean;
-  sessionTimeoutMinutes?: number;
-}
-
-export interface EncryptedMessage extends Message {
-  isEncrypted?: boolean;
-  encryptionMetadata?: {
-    ciphertext: string;
-    wrapped_dek: string;
-    dek_salt: string;
-    dek_iv: string;
-    data_iv: string;
-    kdf_algorithm: string;
-    kdf_iterations: number;
-    encryption_algorithm: string;
-  };
-}
-
-export interface UserProfile {
-  user_id: string;
-  master_salt: string;
-  recovery_hint: string;
-  kdf_algorithm: string;
-  kdf_iterations: number;
-  auto_logout_minutes: number;
-}
 
 export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
   const [messages, setMessages] = useState<EncryptedMessage[]>([]);
@@ -189,7 +164,7 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
 
   // Setup encryption for new users with auto-generated passphrase
   const setupEncryption = useCallback(
-    async (): Promise<{ success: boolean; passphrase?: string }> => {
+    async (): Promise<{ success: boolean; passphrase?: string; isFirstTime?: boolean }> => {
       try {
         // Auto-generate a secure passphrase
         const autoPassphrase = PassphraseManager.generateSecurePassphrase();
@@ -219,10 +194,12 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
             console.warn("Failed to store passphrase - user will need backup file");
           }
 
+          // is_new is already set to true in the database when profile is created
+
           // Initialize session with new profile
           await initializeSession(autoPassphrase);
           
-          return { success: true, passphrase: autoPassphrase };
+          return { success: true, passphrase: autoPassphrase, isFirstTime: true };
         } else {
           const errorData = await response.json();
           setError(errorData.error || "Failed to setup encryption");
@@ -654,14 +631,34 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
   }, []);
 
   // Download backup file
-  const downloadBackup = useCallback(() => {
+  const downloadBackup = useCallback(async () => {
     const storedPassphrase = passphraseManager.getStoredPassphrase();
     if (storedPassphrase) {
       // In a real app, you'd get the user's email from auth context
       passphraseManager.downloadBackup(storedPassphrase, "user@example.com");
+      
+      // Mark user as no longer new (they've downloaded their recovery keys)
+      try {
+        await fetch("/api/user-encryption-profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ is_new: false }),
+        });
+        
+        // Update local state immediately
+        setUserProfile(prev => prev ? { ...prev, is_new: false } : null);
+        console.log("Marked user as no longer new after backup download");
+      } catch (error) {
+        console.warn("Failed to update is_new status:", error);
+      }
     } else {
       setError("No encryption key available to backup");
     }
+  }, []);
+
+  // Function to update user profile state
+  const updateUserProfile = useCallback((updates: Partial<UserProfile>) => {
+    setUserProfile(prev => prev ? { ...prev, ...updates } : null);
   }, []);
 
   // Restore from backup file
@@ -723,5 +720,6 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
     passphrase,
     // Helper functions for UI
     hasStoredPassphrase: () => passphraseManager.hasStoredPassphrase(),
+    updateUserProfile,
   };
 };
