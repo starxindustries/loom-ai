@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { BillingDashboard } from '@/components/billing/billing-dashboard';
 import { BillingDashboardData } from '@/types/subscription';
@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, CreditCard, Calendar } from 'lucide-react';
 
-export default function BillingPage() {
+function BillingPageContent() {
   const [billingData, setBillingData] = useState<BillingDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -149,5 +149,24 @@ export default function BillingPage() {
         <BillingDashboard data={billingData} />
       </div>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8 px-4">
+        <div className="max-w-4xl mx-auto">
+          <Skeleton className="h-8 w-48 mb-6" />
+          <div className="grid gap-6">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-64 w-full" />
+          </div>
+        </div>
+      </div>
+    }>
+      <BillingPageContent />
+    </Suspense>
   );
 }
