@@ -1,7 +1,7 @@
 // pages/encrypted-chat.tsx
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import {
@@ -43,7 +43,7 @@ import { MemoryEncryption, PassphraseManager } from "@/lib/crypto";
 import { ChatSystem } from "@/components/common/chat-system";
 import { UserProfile } from "@/types";
 
-export default function EncryptedChatPage() {
+function EncryptedChatContent() {
   const searchParams = useSearchParams();
   const encryptionParam = searchParams.get("encryption");
   const isNewUser = searchParams.get("new_user") === "true";
@@ -614,5 +614,27 @@ export default function EncryptedChatPage() {
         </div>
       </div> */}
     </div>
+  );
+}
+
+export default function EncryptedChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center space-y-4"
+        >
+          <div className="flex items-center justify-center">
+            <Loader2Icon className="h-8 w-8 animate-spin text-primary mr-3" />
+            <h2 className="text-2xl font-semibold">Loom AI Memory</h2>
+          </div>
+          <p className="text-muted-foreground">Loading encrypted chat...</p>
+        </motion.div>
+      </div>
+    }>
+      <EncryptedChatContent />
+    </Suspense>
   );
 }
