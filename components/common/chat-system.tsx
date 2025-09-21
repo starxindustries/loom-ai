@@ -240,7 +240,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({
       </div>
 
       {/* Input Area */}
-      <div className="fixed  bottom-0 w-full border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-xl">
+      <div className="fixed  bottom-0 w-full border-t bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60 shadow-xl">
         <div className="max-w-6xl mx-auto px-6 py-4">
           {/* Action Buttons */}
           {/* <div className="flex items-center justify-end gap-2 mb-3">
@@ -278,7 +278,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({
                 }
                 onKeyDown={handleTextareaKeyPress}
                 placeholder="Type your message..."
-                className="min-h-[48px] resize-none w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-[48px] resize-none w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 rows={1}
               />
             </div>

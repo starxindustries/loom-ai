@@ -47,6 +47,7 @@ const ThemeSwitcher = () => {
     <Button
       variant="ghost"
       size="sm"
+      className="shadow-xl border shadow-primary"
       onClick={handleClick}
       aria-label="Toggle theme"
     >

@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import {
   ShieldIcon,
   KeyIcon,
@@ -43,6 +44,17 @@ import { ChatSystem } from "@/components/common/chat-system";
 import { UserProfile } from "@/types";
 
 export default function EncryptedChatPage() {
+  const searchParams = useSearchParams();
+  const encryptionParam = searchParams.get("encryption");
+  const isNewUser = searchParams.get("new_user") === "true";
+
+  // Debug logging
+  console.log("Protected page URL params:", {
+    encryptionParam,
+    isNewUser,
+    allParams: Object.fromEntries(searchParams.entries())
+  });
+
   const {
     messages,
     isLoading,
@@ -120,9 +132,9 @@ export default function EncryptedChatPage() {
       
       // Show popup if:
       // 1. User has a stored passphrase (auto-generated)
-      // 2. User is logged in (session active)
-      // 3. User is marked as new in database (hasn't downloaded recovery keys yet)
-      if (hasStoredPassphraseValue && isSessionActive && userProfile?.is_new) {
+      // 2. User is marked as new in database (hasn't downloaded recovery keys yet)
+      // 3. Either session is active OR we're in setup mode (for new users)
+      if (hasStoredPassphraseValue && userProfile?.is_new && (isSessionActive || encryptionSetupRequired)) {
         const storedPassphrase = PassphraseManager.getStoredPassphrase();
         if (storedPassphrase) {
           setGeneratedPassphrase(storedPassphrase);
@@ -131,11 +143,11 @@ export default function EncryptedChatPage() {
       }
     };
 
-    // Small delay to ensure session is fully initialized
-    if (isSessionActive && !isInitializing && userProfile) {
-      setTimeout(checkRecoveryKeysPopup, 1000);
+    // Check immediately if we have the required data
+    if (!isInitializing && userProfile) {
+      checkRecoveryKeysPopup();
     }
-  }, [isSessionActive, isInitializing, hasStoredPassphrase, userProfile?.is_new]);
+  }, [isSessionActive, isInitializing, hasStoredPassphrase, userProfile?.is_new, encryptionSetupRequired]);
 
   // Auto-trigger encryption setup for new users
   useEffect(() => {
@@ -174,7 +186,7 @@ export default function EncryptedChatPage() {
   return (
     <div className="bg-background">
       {/* Header */}
-      <div className="fixed  top-0 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="fixed  top-0 w-full border-b bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -327,12 +339,12 @@ export default function EncryptedChatPage() {
 
       {/* Session Unlock Modal */}
       <AnimatePresence>
-        {!isSessionActive && (
+        {!isSessionActive && !encryptionSetupRequired && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50"
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
@@ -551,7 +563,7 @@ export default function EncryptedChatPage() {
                         Download My Recovery Key
                       </Button>
 
-                      <Button
+                      {/* <Button
                         onClick={() => {
                           // Just close popup, don't update database
                           // User will see popup again on next login/reload until they download
@@ -562,7 +574,7 @@ export default function EncryptedChatPage() {
                         variant="outline"
                       >
                         I'll Download Later
-                      </Button>
+                      </Button> */}
                     </div>
                   </div>
                 </div>

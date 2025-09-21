@@ -45,35 +45,43 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
         if (response.ok) {
           const data = await response.json();
           setUserProfile(data.profile);
-          setInitializationStatus("Checking session...");
           
-          // Check if session is already active
-          if (secureSession.isActive()) {
-            setIsSessionActive(true);
-            setInitializationStatus("Session restored successfully!");
-            setTimeout(() => setIsInitializing(false), 500);
+          // Check if this is a new user who needs encryption setup
+          if (data.profile.is_new) {
+            setEncryptionSetupRequired(true);
+            setInitializationStatus("Setting up encryption for new user...");
+            setIsInitializing(false);
           } else {
-            // Try to auto-initialize with stored passphrase
-            const storedPassphrase = passphraseManager.getStoredPassphrase();
-            if (storedPassphrase) {
-              setInitializationStatus("Auto-unlocking with stored key...");
-              try {
-                await secureSession.initializeSession(storedPassphrase, data.profile.master_salt);
-                setIsSessionActive(true);
-                setInitializationStatus("Session unlocked successfully!");
-                console.log("Auto-initialized session with stored passphrase");
-                setTimeout(() => setIsInitializing(false), 800);
-              } catch (error) {
-                console.error("Failed to auto-initialize session:", error);
-                // If stored passphrase is invalid, clear it
-                passphraseManager.clearStoredPassphrase();
-                setError("Stored encryption key is invalid. Please restore from backup.");
+            setInitializationStatus("Checking session...");
+            
+            // Check if session is already active
+            if (secureSession.isActive()) {
+              setIsSessionActive(true);
+              setInitializationStatus("Session restored successfully!");
+              setTimeout(() => setIsInitializing(false), 500);
+            } else {
+              // Try to auto-initialize with stored passphrase
+              const storedPassphrase = passphraseManager.getStoredPassphrase();
+              if (storedPassphrase) {
+                setInitializationStatus("Auto-unlocking with stored key...");
+                try {
+                  await secureSession.initializeSession(storedPassphrase, data.profile.master_salt);
+                  setIsSessionActive(true);
+                  setInitializationStatus("Session unlocked successfully!");
+                  console.log("Auto-initialized session with stored passphrase");
+                  setTimeout(() => setIsInitializing(false), 800);
+                } catch (error) {
+                  console.error("Failed to auto-initialize session:", error);
+                  // If stored passphrase is invalid, clear it
+                  passphraseManager.clearStoredPassphrase();
+                  setError("Stored encryption key is invalid. Please restore from backup.");
+                  setIsInitializing(false);
+                }
+              } else {
+                // No stored passphrase found
+                setInitializationStatus("No stored key found");
                 setIsInitializing(false);
               }
-            } else {
-              // No stored passphrase found
-              setInitializationStatus("No stored key found");
-              setIsInitializing(false);
             }
           }
         } else if (response.status === 404) {
@@ -166,11 +174,16 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
   const setupEncryption = useCallback(
     async (): Promise<{ success: boolean; passphrase?: string; isFirstTime?: boolean }> => {
       try {
+        setInitializationStatus("Generating secure passphrase...");
+        
         // Auto-generate a secure passphrase
         const autoPassphrase = PassphraseManager.generateSecurePassphrase();
-        console.log("Generated secure passphrase for new user");
+        console.log("✅ Generated secure passphrase for new user:", autoPassphrase);
+        console.log("🔍 Passphrase validation:", MemoryEncryption.validatePassphraseStrength(autoPassphrase));
 
-        // Create user encryption profile
+        setInitializationStatus("Setting up encryption profile...");
+        
+        // Try to create user encryption profile
         const response = await fetch("/api/user-encryption-profile", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -183,10 +196,13 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
         });
 
         if (response.ok) {
+          // Profile created successfully
           const data = await response.json();
           setUserProfile(data.profile);
           setEncryptionSetupRequired(false);
 
+          setInitializationStatus("Storing passphrase securely...");
+          
           // Store the auto-generated passphrase
           if (passphraseManager.storePassphrase(autoPassphrase)) {
             console.log("Stored auto-generated passphrase securely");
@@ -194,12 +210,47 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
             console.warn("Failed to store passphrase - user will need backup file");
           }
 
-          // is_new is already set to true in the database when profile is created
-
+          setInitializationStatus("Initializing secure session...");
+          
           // Initialize session with new profile
           await initializeSession(autoPassphrase);
           
+          setInitializationStatus("Setup complete! Showing recovery keys...");
+          
           return { success: true, passphrase: autoPassphrase, isFirstTime: true };
+        } else if (response.status === 409) {
+          // Profile already exists (created by database trigger)
+          console.log("Profile already exists, fetching existing profile...");
+          setInitializationStatus("Using existing encryption profile...");
+          
+          // Fetch the existing profile
+          const getResponse = await fetch("/api/user-encryption-profile");
+          if (getResponse.ok) {
+            const data = await getResponse.json();
+            setUserProfile(data.profile);
+            setEncryptionSetupRequired(false);
+
+            setInitializationStatus("Storing passphrase securely...");
+            
+            // Store the auto-generated passphrase
+            if (passphraseManager.storePassphrase(autoPassphrase)) {
+              console.log("Stored auto-generated passphrase securely");
+            } else {
+              console.warn("Failed to store passphrase - user will need backup file");
+            }
+
+            setInitializationStatus("Initializing secure session...");
+            
+            // Initialize session with existing profile
+            await initializeSession(autoPassphrase);
+            
+            setInitializationStatus("Setup complete! Showing recovery keys...");
+            
+            return { success: true, passphrase: autoPassphrase, isFirstTime: true };
+          } else {
+            setError("Failed to fetch existing encryption profile");
+            return { success: false };
+          }
         } else {
           const errorData = await response.json();
           setError(errorData.error || "Failed to setup encryption");

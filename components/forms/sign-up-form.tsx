@@ -114,10 +114,6 @@ export function SignUpForm({
     }
   };
 
-  const handleGoogleSignUp = () => {
-    // Google OAuth signup - encryption will be set up automatically after login
-    console.log("Google signup - encryption setup will be handled automatically");
-  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -128,9 +124,7 @@ export function SignUpForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-6">
-            <div onClick={handleGoogleSignUp}>
-              <GoogleAuthButton mode="signup" />
-            </div>
+            <GoogleAuthButton mode="signup" />
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">

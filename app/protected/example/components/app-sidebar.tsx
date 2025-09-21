@@ -15,6 +15,7 @@ import {
   SearchIcon,
   SettingsIcon,
   UsersIcon,
+  BrainIcon,
 } from "lucide-react";
 
 import { NavDocuments } from "./nav-documents";
@@ -30,6 +31,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
+import Image from "next/image";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const data = {
   user: {
@@ -40,8 +45,13 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/protected",
       icon: LayoutDashboardIcon,
+    },
+    {
+      title: "Memories",
+      url: "/protected/memories",
+      icon: BrainIcon,
     },
     {
       title: "Lifecycle",
@@ -149,6 +159,13 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const theme = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, [theme]);
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -156,12 +173,47 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5! hover:bg-transparent hover:text-default"
             >
-              <a href="#">
-                <ArrowUpCircleIcon className="h-5 w-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+              <Link href="/protected">
+                {!mounted ? (
+                  <Image
+                    src={"/assests/logo/logo_light.png"}
+                    priority
+                    alt="Loom AI"
+                    width={30}
+                    height={30}
+                    style={{
+                      filter: "brightness(0.7) saturate(150%) hue-rotate(90deg) contrast(120%)",
+                    }}
+                  />
+                ) : theme?.resolvedTheme === "dark" ? (
+                  <Image
+                    src={"/assests/logo/logo_dark.png"}
+                    priority
+                    alt="Loom AI"
+                    width={30}
+                    height={30}
+                    style={{
+                      filter: "brightness(0.7) saturate(150%) hue-rotate(90deg) contrast(120%)",
+                    }}
+                  />
+                ) : (
+                  <Image
+                    src={"/assests/logo/logo_light.png"}
+                    priority
+                    alt="Loom AI"
+                    width={30}
+                    height={30}
+                    style={{
+                      filter: "brightness(0.7) saturate(150%) hue-rotate(90deg) contrast(120%)",
+                    }}
+                  />
+                )}
+                <span className="text-base text-[25px] font-bold opacity-60">
+                  Loom AI
+                </span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

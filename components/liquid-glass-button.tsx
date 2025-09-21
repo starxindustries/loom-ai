@@ -7,7 +7,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center cursor-pointer justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -59,7 +59,7 @@ Button.displayName = "Button"
 export { Button, buttonVariants, liquidbuttonVariants, LiquidButton }
 
 const liquidbuttonVariants = cva(
-  "inline-flex items-center transition-colors justify-center cursor-pointer gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center transition-colors justify-center cursor-pointer gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-[color,box-shadow] disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-hidden focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
@@ -200,46 +200,46 @@ const colorVariants: Record<
   }
 > = {
   default: {
-    outer: "bg-gradient-to-b from-[#000] to-[#A0A0A0]",
-    inner: "bg-gradient-to-b from-[#FAFAFA] via-[#3E3E3E] to-[#E5E5E5]",
-    button: "bg-gradient-to-b from-[#B9B9B9] to-[#969696]",
+    outer: "bg-linear-to-b from-black to-[#A0A0A0]",
+    inner: "bg-linear-to-b from-[#FAFAFA] via-[#3E3E3E] to-[#E5E5E5]",
+    button: "bg-linear-to-b from-[#B9B9B9] to-[#969696]",
     textColor: "text-white",
-    textShadow: "[text-shadow:_0_-1px_0_rgb(80_80_80_/_100%)]",
+    textShadow: "[text-shadow:0_-1px_0_rgb(80_80_80/100%)]",
   },
   primary: {
-    outer: "bg-gradient-to-b from-[#000] to-[#A0A0A0]",
-    inner: "bg-gradient-to-b from-primary via-secondary to-muted",
-    button: "bg-gradient-to-b from-primary to-primary/40",
+    outer: "bg-linear-to-b from-black to-[#A0A0A0]",
+    inner: "bg-linear-to-b from-primary via-secondary to-muted",
+    button: "bg-linear-to-b from-primary to-primary/40",
     textColor: "text-white",
-    textShadow: "[text-shadow:_0_-1px_0_rgb(30_58_138_/_100%)]",
+    textShadow: "[text-shadow:0_-1px_0_rgb(30_58_138/100%)]",
   },
   success: {
-    outer: "bg-gradient-to-b from-[#005A43] to-[#7CCB9B]",
-    inner: "bg-gradient-to-b from-[#E5F8F0] via-[#00352F] to-[#D1F0E6]",
-    button: "bg-gradient-to-b from-[#9ADBC8] to-[#3E8F7C]",
+    outer: "bg-linear-to-b from-[#005A43] to-[#7CCB9B]",
+    inner: "bg-linear-to-b from-[#E5F8F0] via-[#00352F] to-[#D1F0E6]",
+    button: "bg-linear-to-b from-[#9ADBC8] to-[#3E8F7C]",
     textColor: "text-[#FFF7F0]",
-    textShadow: "[text-shadow:_0_-1px_0_rgb(6_78_59_/_100%)]",
+    textShadow: "[text-shadow:0_-1px_0_rgb(6_78_59/100%)]",
   },
   error: {
-    outer: "bg-gradient-to-b from-[#5A0000] to-[#FFAEB0]",
-    inner: "bg-gradient-to-b from-[#FFDEDE] via-[#680002] to-[#FFE9E9]",
-    button: "bg-gradient-to-b from-[#F08D8F] to-[#A45253]",
+    outer: "bg-linear-to-b from-[#5A0000] to-[#FFAEB0]",
+    inner: "bg-linear-to-b from-[#FFDEDE] via-[#680002] to-[#FFE9E9]",
+    button: "bg-linear-to-b from-[#F08D8F] to-[#A45253]",
     textColor: "text-[#FFF7F0]",
-    textShadow: "[text-shadow:_0_-1px_0_rgb(146_64_14_/_100%)]",
+    textShadow: "[text-shadow:0_-1px_0_rgb(146_64_14/100%)]",
   },
   gold: {
-    outer: "bg-gradient-to-b from-[#917100] to-[#EAD98F]",
-    inner: "bg-gradient-to-b from-[#FFFDDD] via-[#856807] to-[#FFF1B3]",
-    button: "bg-gradient-to-b from-[#FFEBA1] to-[#9B873F]",
+    outer: "bg-linear-to-b from-[#917100] to-[#EAD98F]",
+    inner: "bg-linear-to-b from-[#FFFDDD] via-[#856807] to-[#FFF1B3]",
+    button: "bg-linear-to-b from-[#FFEBA1] to-[#9B873F]",
     textColor: "text-[#FFFDE5]",
-    textShadow: "[text-shadow:_0_-1px_0_rgb(178_140_2_/_100%)]",
+    textShadow: "[text-shadow:0_-1px_0_rgb(178_140_2/100%)]",
   },
   bronze: {
-    outer: "bg-gradient-to-b from-[#864813] to-[#E9B486]",
-    inner: "bg-gradient-to-b from-[#EDC5A1] via-[#5F2D01] to-[#FFDEC1]",
-    button: "bg-gradient-to-b from-[#FFE3C9] to-[#A36F3D]",
+    outer: "bg-linear-to-b from-[#864813] to-[#E9B486]",
+    inner: "bg-linear-to-b from-[#EDC5A1] via-[#5F2D01] to-[#FFDEC1]",
+    button: "bg-linear-to-b from-[#FFE3C9] to-[#A36F3D]",
     textColor: "text-[#FFF7F0]",
-    textShadow: "[text-shadow:_0_-1px_0_rgb(124_45_18_/_100%)]",
+    textShadow: "[text-shadow:0_-1px_0_rgb(124_45_18/100%)]",
   },
 };
  
@@ -270,7 +270,7 @@ const metalButtonVariants = (
       transformOrigin: "center center",
     },
     inner: cn(
-      "absolute inset-[1px] transform-gpu rounded-lg will-change-transform",
+      "absolute inset-px transform-gpu rounded-lg will-change-transform",
       colors.inner,
     ),
     innerStyle: {
@@ -280,7 +280,7 @@ const metalButtonVariants = (
         isHovered && !isPressed && !isTouchDevice ? "brightness(1.05)" : "none",
     },
     button: cn(
-      "relative z-10 m-[1px] rounded-md inline-flex h-11 transform-gpu cursor-pointer items-center justify-center overflow-hidden rounded-md px-6 py-2 text-sm leading-none font-semibold will-change-transform outline-none",
+      "relative z-10 m-px rounded-md inline-flex h-11 transform-gpu cursor-pointer items-center justify-center overflow-hidden rounded-md px-6 py-2 text-sm leading-none font-semibold will-change-transform outline-hidden",
       colors.button,
       colors.textColor,
       colors.textShadow,
@@ -303,7 +303,7 @@ const ShineEffect = ({ isPressed }: { isPressed: boolean }) => {
         isPressed ? "opacity-20" : "opacity-0",
       )}
     >
-      <div className="absolute inset-0 rounded-md bg-gradient-to-r from-transparent via-neutral-100 to-transparent" />
+      <div className="absolute inset-0 rounded-md bg-linear-to-r from-transparent via-neutral-100 to-transparent" />
     </div>
   );
 };
@@ -372,7 +372,7 @@ export const MetalButton = React.forwardRef<
         <ShineEffect isPressed={isPressed} />
         {buttonText}
         {isHovered && !isPressed && !isTouchDevice && (
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t rounded-lg from-transparent to-white/5" />
+          <div className="pointer-events-none absolute inset-0 bg-linear-to-t rounded-lg from-transparent to-white/5" />
         )}
       </button>
     </div>

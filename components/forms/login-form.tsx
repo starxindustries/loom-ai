@@ -100,23 +100,6 @@ export function LoginForm({
     }
   };
 
-  const handleGoogleLogin = async () => {
-    const supabase = createClient();
-    setError(null);
-    
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/protected?encryption=setup`,
-        },
-      });
-      
-      if (error) throw error;
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Google login failed");
-    }
-  };
 
   // Clear info message after a delay
   useEffect(() => {
@@ -137,9 +120,7 @@ export function LoginForm({
         </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-6">
-            <div onClick={handleGoogleLogin}>
-              <GoogleAuthButton mode="login" />
-            </div>
+            <GoogleAuthButton mode="login" />
             
             <div className="relative">
               <div className="absolute inset-0 flex items-center">

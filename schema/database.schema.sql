@@ -48,6 +48,7 @@ create table public.user_encryption_profiles (
   auto_logout_minutes integer null default 30,
   max_failed_attempts integer null default 5,
   recovery_hint text null,
+  is_new boolean null default true,
   created_at timestamp with time zone null default now(),
   updated_at timestamp with time zone null default now(),
   last_passphrase_change timestamp with time zone null default now(),

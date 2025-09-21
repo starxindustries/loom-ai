@@ -18,11 +18,14 @@ export function GoogleAuthButton({ mode, className }: GoogleAuthButtonProps) {
     const supabase = createClient();
     setIsLoading(true);
 
+    console.log("GoogleAuthButton clicked with mode:", mode);
+    console.log("Current URL:", window.location.href);
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?mode=${mode}`,
         },
       });
 

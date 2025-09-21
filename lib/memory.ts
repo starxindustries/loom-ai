@@ -1,6 +1,6 @@
 // search memory
 import { createClient } from "@/lib/supabase/server";
-import { Memory, MemorySearchResult } from "@/types/memory";
+import { Memory, MemorySearchResult, MemoryListResult, DeleteMemoryResult } from "@/types/memory";
 import OpenAI from "openai";
 
 // Initialize OpenAI client for embeddings
@@ -289,6 +289,130 @@ export async function updateMemoryEmbedding(
     return { success: true };
   } catch (error) {
     console.error("Update memory embedding error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * List all memories for a user with pagination
+ */
+export async function listMemories(
+  userId: string,
+  options: {
+    page?: number;
+    limit?: number;
+    sort_by?: 'created_at' | 'updated_at';
+    sort_order?: 'asc' | 'desc';
+  } = {}
+): Promise<MemoryListResult> {
+  const {
+    page = 1,
+    limit = 20,
+    sort_by = 'created_at',
+    sort_order = 'desc'
+  } = options;
+
+  const offset = (page - 1) * limit;
+
+  try {
+    const supabase = await createClient();
+
+    // Get total count
+    const { count } = await supabase
+      .from('encrypted_memories')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    // Get memories with pagination
+    const { data: memories, error } = await supabase
+      .from('encrypted_memories')
+      .select('*')
+      .eq('user_id', userId)
+      .order(sort_by, { ascending: sort_order === 'asc' })
+      .range(offset, offset + limit - 1);
+
+    if (error) {
+      console.error("List memories error:", error);
+      return {
+        memories: [],
+        total: 0,
+        page,
+        total_pages: 0,
+        has_next: false,
+        has_prev: false,
+      };
+    }
+
+    const total = count || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      memories: memories || [],
+      total,
+      page,
+      total_pages: totalPages,
+      has_next: page < totalPages,
+      has_prev: page > 1,
+    };
+  } catch (error) {
+    console.error("List memories error:", error);
+    return {
+      memories: [],
+      total: 0,
+      page,
+      total_pages: 0,
+      has_next: false,
+      has_prev: false,
+    };
+  }
+}
+
+/**
+ * Delete a memory by ID
+ */
+export async function deleteMemory(
+  userId: string,
+  memoryId: string
+): Promise<DeleteMemoryResult> {
+  try {
+    const supabase = await createClient();
+
+    // First verify the memory belongs to the user
+    const { data: memory, error: fetchError } = await supabase
+      .from('encrypted_memories')
+      .select('id')
+      .eq('id', memoryId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError || !memory) {
+      return {
+        success: false,
+        error: "Memory not found or access denied",
+      };
+    }
+
+    // Delete the memory
+    const { error: deleteError } = await supabase
+      .from('encrypted_memories')
+      .delete()
+      .eq('id', memoryId)
+      .eq('user_id', userId);
+
+    if (deleteError) {
+      console.error("Delete memory error:", deleteError);
+      return {
+        success: false,
+        error: deleteError.message,
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Delete memory error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

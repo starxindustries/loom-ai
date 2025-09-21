@@ -54,6 +54,7 @@ export async function GET(request: NextRequest) {
             require_passphrase_verification: true,
             auto_logout_minutes: 30,
             max_failed_attempts: 5,
+            is_new: true, // Mark as new user for recovery keys dialog
           })
           .select()
           .single();

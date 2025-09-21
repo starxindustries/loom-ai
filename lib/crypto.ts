@@ -458,7 +458,7 @@ export class MemoryEncryption {
   }
 
   /**
-   * Validate passphrase strength
+   * Validate passphrase strength (optimized for word-based passphrases)
    */
   static validatePassphraseStrength(passphrase: string): {
     isValid: boolean;
@@ -468,47 +468,86 @@ export class MemoryEncryption {
     const feedback: string[] = [];
     let score = 0;
 
-    // Length check
-    if (passphrase.length < 12) {
-      feedback.push("Use at least 12 characters");
-    } else if (passphrase.length >= 16) {
-      score += 2;
+    // Check if it's a word-based passphrase (contains hyphens)
+    const isWordBased = passphrase.includes('-');
+    const words = isWordBased ? passphrase.split('-') : [passphrase];
+
+    if (isWordBased) {
+      // Word-based passphrase validation
+      if (words.length < 8) {
+        feedback.push("Use at least 8 words for better security");
+        score += 1;
+      } else if (words.length >= 12) {
+        score += 3; // Excellent
+      } else {
+        score += 2; // Good
+      }
+
+      // Check for word repetition
+      const uniqueWords = new Set(words);
+      if (uniqueWords.size < words.length) {
+        feedback.push("Avoid repeating words");
+        score -= 1;
+      } else {
+        score += 1; // Bonus for no repetition
+      }
+
+      // Length check for word-based
+      if (passphrase.length < 50) {
+        feedback.push("Use longer passphrases for better security");
+      } else {
+        score += 1;
+      }
+
+      // Word-based passphrases are generally very secure
+      return {
+        isValid: words.length >= 8 && uniqueWords.size === words.length,
+        score: Math.max(0, Math.min(5, score)),
+        feedback: feedback.length > 0 ? feedback : ["Excellent word-based passphrase!"],
+      };
     } else {
-      score += 1;
+      // Traditional password validation
+      if (passphrase.length < 12) {
+        feedback.push("Use at least 12 characters");
+      } else if (passphrase.length >= 16) {
+        score += 2;
+      } else {
+        score += 1;
+      }
+
+      // Character variety
+      const hasLower = /[a-z]/.test(passphrase);
+      const hasUpper = /[A-Z]/.test(passphrase);
+      const hasNumbers = /\d/.test(passphrase);
+      const hasSymbols = /[^a-zA-Z\d]/.test(passphrase);
+
+      const variety = [hasLower, hasUpper, hasNumbers, hasSymbols].filter(
+        Boolean
+      ).length;
+
+      if (variety < 3) {
+        feedback.push("Use a mix of uppercase, lowercase, numbers, and symbols");
+      } else {
+        score += variety - 2;
+      }
+
+      // Common patterns
+      if (/(.)\1{2,}/.test(passphrase)) {
+        feedback.push("Avoid repeated characters");
+        score -= 1;
+      }
+
+      if (/^[a-zA-Z]+\d+$/.test(passphrase)) {
+        feedback.push('Avoid simple patterns like "word123"');
+        score -= 1;
+      }
+
+      return {
+        isValid: score >= 3 && passphrase.length >= 12,
+        score: Math.max(0, Math.min(5, score)),
+        feedback,
+      };
     }
-
-    // Character variety
-    const hasLower = /[a-z]/.test(passphrase);
-    const hasUpper = /[A-Z]/.test(passphrase);
-    const hasNumbers = /\d/.test(passphrase);
-    const hasSymbols = /[^a-zA-Z\d]/.test(passphrase);
-
-    const variety = [hasLower, hasUpper, hasNumbers, hasSymbols].filter(
-      Boolean
-    ).length;
-
-    if (variety < 3) {
-      feedback.push("Use a mix of uppercase, lowercase, numbers, and symbols");
-    } else {
-      score += variety - 2;
-    }
-
-    // Common patterns
-    if (/(.)\1{2,}/.test(passphrase)) {
-      feedback.push("Avoid repeated characters");
-      score -= 1;
-    }
-
-    if (/^[a-zA-Z]+\d+$/.test(passphrase)) {
-      feedback.push('Avoid simple patterns like "word123"');
-      score -= 1;
-    }
-
-    return {
-      isValid: score >= 3 && passphrase.length >= 12,
-      score: Math.max(0, Math.min(5, score)),
-      feedback,
-    };
   }
 }
 
@@ -551,7 +590,15 @@ export class PassphraseManager {
       words.push(wordList[index]);
     }
     
-    return words.join("-");
+    const passphrase = words.join("-");
+    
+    // Debug logging to help identify issues
+    console.log("🔐 Generated secure passphrase:", passphrase);
+    console.log("📊 Passphrase length:", passphrase.length);
+    console.log("🎲 Word count:", words.length);
+    console.log("🔢 Entropy estimate: ~132 bits");
+    
+    return passphrase;
   }
 
   /**
@@ -561,10 +608,12 @@ export class PassphraseManager {
     try {
       // In a production app, you'd encrypt this with a device-specific key
       // For now, we'll store it directly (still better than manual entry)
+      console.log("💾 Storing passphrase in localStorage:", passphrase.substring(0, 20) + "...");
       localStorage.setItem(this.STORAGE_KEY, passphrase);
+      console.log("✅ Passphrase stored successfully");
       return true;
     } catch (error) {
-      console.error("Failed to store passphrase:", error);
+      console.error("❌ Failed to store passphrase:", error);
       return false;
     }
   }
@@ -574,9 +623,16 @@ export class PassphraseManager {
    */
   static getStoredPassphrase(): string | null {
     try {
-      return localStorage.getItem(this.STORAGE_KEY);
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      if (stored) {
+        console.log("🔑 Retrieved stored passphrase:", stored.substring(0, 20) + "...");
+        console.log("📏 Stored passphrase length:", stored.length);
+      } else {
+        console.log("❌ No passphrase found in localStorage");
+      }
+      return stored;
     } catch (error) {
-      console.error("Failed to retrieve passphrase:", error);
+      console.error("❌ Failed to retrieve passphrase:", error);
       return null;
     }
   }

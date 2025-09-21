@@ -20,6 +20,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavDocuments({
   items,
@@ -37,12 +38,12 @@ export function NavDocuments({
       <SidebarGroupLabel>Documents</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
-          <SidebarMenuItem key={item.name}>
+          <SidebarMenuItem key={item.name} className="cursor-pointer">
             <SidebarMenuButton asChild>
-              <a href={item.url}>
+              <Link href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
-              </a>
+              </Link>
             </SidebarMenuButton>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -46,7 +46,7 @@ const PopoverContent = React.forwardRef<
       align={align}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 w-64 rounded-xl bg-popover dark:bg-[#303030] p-2 text-popover-foreground dark:text-white shadow-md outline-none animate-in data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        "z-50 w-64 rounded-xl bg-popover dark:bg-[#303030] p-2 text-popover-foreground dark:text-white shadow-md outline-hidden animate-in data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         className
       )}
       {...props}
@@ -64,7 +64,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/60 backdrop-blur-xs data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -419,7 +419,7 @@ export const PromptBox = React.forwardRef<
       {imagePreview && (
         <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
           {" "}
-          <div className="relative mb-1 w-fit rounded-[1rem] px-1 pt-1">
+          <div className="relative mb-1 w-fit rounded-2xl px-1 pt-1">
             {" "}
             <button
               type="button"
@@ -430,7 +430,7 @@ export const PromptBox = React.forwardRef<
               <img
                 src={imagePreview}
                 alt="Image preview"
-                className="h-14.5 w-14.5 rounded-[1rem]"
+                className="h-14.5 w-14.5 rounded-2xl"
               />{" "}
             </button>{" "}
             <button
@@ -459,7 +459,7 @@ export const PromptBox = React.forwardRef<
         value={value}
         onChange={handleInputChange}
         placeholder="Message..."
-        className="custom-scrollbar w-full resize-none border-0 bg-transparent p-3 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-300 focus:ring-0 focus-visible:outline-none min-h-12"
+        className="custom-scrollbar w-full resize-none border-0 bg-transparent p-3 text-foreground dark:text-white placeholder:text-muted-foreground dark:placeholder:text-gray-300 focus:ring-0 focus-visible:outline-hidden min-h-12"
         {...props}
       />
 
@@ -472,7 +472,7 @@ export const PromptBox = React.forwardRef<
                 <button
                   type="button"
                   onClick={handlePlusClick}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-hidden"
                 >
                   <PlusIcon className="h-6 w-6" />
                   <span className="sr-only">Attach image</span>
@@ -489,7 +489,7 @@ export const PromptBox = React.forwardRef<
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="flex h-8 items-center gap-2 rounded-full p-2 text-sm text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none focus-visible:ring-ring"
+                      className="flex h-8 items-center gap-2 rounded-full p-2 text-sm text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-hidden focus-visible:ring-ring"
                     >
                       <Settings2Icon className="h-4 w-4" />
                       {!selectedTool && "Tools"}
@@ -544,7 +544,7 @@ export const PromptBox = React.forwardRef<
                 <TooltipTrigger asChild>
                   <button
                     type="button"
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-none"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-foreground dark:text-white transition-colors hover:bg-accent dark:hover:bg-[#515151] focus-visible:outline-hidden"
                   >
                     <MicIcon className="h-5 w-5" />
                     <span className="sr-only">Record voice</span>
@@ -560,7 +560,7 @@ export const PromptBox = React.forwardRef<
                   <button
                     type="submit"
                     disabled={!hasValue}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80 disabled:bg-black/40 dark:disabled:bg-[#515151]"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none bg-black text-white hover:bg-black/80 dark:bg-white dark:text-black dark:hover:bg-white/80 disabled:bg-black/40 dark:disabled:bg-[#515151]"
                   >
                     <SendIcon className="h-6 w-6 text-bold" />
                     <span className="sr-only">Send message</span>
