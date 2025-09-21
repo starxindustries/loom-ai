@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,13 +24,32 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { SubscriptionButton } from "@/components/common/subscription-button";
 
 export default function MemoryAILanding() {
-  const showPaymentToast = () => {
-    toast.warning("Coming Soon", {
-      description: "Payment integration is coming soon.",
-    });
-  };
+  useEffect(() => {
+    // Handle success and cancellation redirects
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const cancelled = urlParams.get('cancelled');
+    const plan = urlParams.get('plan');
+
+    if (success === 'true') {
+      toast.success('Subscription Successful!', {
+        description: `Welcome to ${plan || 'your new plan'}! You can now access all premium features.`,
+        duration: 5000,
+      });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (cancelled === 'true') {
+      toast.info('Subscription Cancelled', {
+        description: 'No worries! You can try again anytime or contact support if you need help.',
+        duration: 4000,
+      });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -266,13 +286,15 @@ export default function MemoryAILanding() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button
+                <SubscriptionButton
+                  planSlug="free"
+                  planName="Free"
+                  price={0}
                   variant="outline"
                   className="w-full neon-border hover:bg-primary/20 transition-all duration-300 bg-transparent"
-                  onClick={showPaymentToast}
                 >
-                  Subscribe
-                </Button>
+                  Get Started Free
+                </SubscriptionButton>
               </CardFooter>
             </Card>
 
@@ -286,7 +308,7 @@ export default function MemoryAILanding() {
                   Affordable entry-level plan
                 </CardDescription>
                 <div className="text-4xl font-bold text-foreground">
-                  $9
+                  $9.99
                   <span className="text-sm font-normal text-muted-foreground">
                     /month
                   </span>
@@ -295,7 +317,7 @@ export default function MemoryAILanding() {
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Check className="h-5 w-5 text-secondary glow-effect" />
-                  <span className="text-sm">200 Memory Records</span>
+                  <span className="text-sm">100 Memory Records</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Check className="h-5 w-5 text-secondary glow-effect" />
@@ -303,13 +325,15 @@ export default function MemoryAILanding() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button
+                <SubscriptionButton
+                  planSlug="starter"
+                  planName="Starter"
+                  price={9.99}
                   variant="outline"
                   className="w-full neon-border hover:bg-secondary/20 transition-all duration-300 bg-transparent"
-                  onClick={showPaymentToast}
                 >
                   Subscribe
-                </Button>
+                </SubscriptionButton>
               </CardFooter>
             </Card>
 
@@ -324,7 +348,7 @@ export default function MemoryAILanding() {
                   Best value for regular users
                 </CardDescription>
                 <div className="text-4xl font-bold holographic-text">
-                  $19
+                  $19.99
                   <span className="text-sm font-normal text-muted-foreground">
                     /month
                   </span>
@@ -333,7 +357,7 @@ export default function MemoryAILanding() {
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Check className="h-5 w-5 text-primary glow-effect" />
-                  <span className="text-sm">1,000 Memory Records</span>
+                  <span className="text-sm">500 Memory Records</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Check className="h-5 w-5 text-primary glow-effect" />
@@ -341,13 +365,15 @@ export default function MemoryAILanding() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button
+                <SubscriptionButton
+                  planSlug="pro"
+                  planName="Pro"
+                  price={19.99}
                   className="w-full glow-effect hover:scale-105 transition-all duration-300"
-                  onClick={showPaymentToast}
+                  showIcon={true}
                 >
-                  <Zap className="mr-2 h-4 w-4" />
                   Subscribe
-                </Button>
+                </SubscriptionButton>
               </CardFooter>
             </Card>
 
@@ -359,7 +385,7 @@ export default function MemoryAILanding() {
                   For power users and small teams
                 </CardDescription>
                 <div className="text-4xl font-bold text-foreground">
-                  $49
+                  $39.99
                   <span className="text-sm font-normal text-muted-foreground">
                     /month
                   </span>
@@ -368,7 +394,7 @@ export default function MemoryAILanding() {
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
                   <Check className="h-5 w-5 text-accent glow-effect" />
-                  <span className="text-sm">5,000 Memory Records</span>
+                  <span className="text-sm">2,000 Memory Records</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Check className="h-5 w-5 text-accent glow-effect" />
@@ -376,13 +402,15 @@ export default function MemoryAILanding() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button
+                <SubscriptionButton
+                  planSlug="pro-plus"
+                  planName="Pro Plus"
+                  price={39.99}
                   variant="outline"
                   className="w-full neon-border hover:bg-accent/20 transition-all duration-300 bg-transparent"
-                  onClick={showPaymentToast}
                 >
                   Subscribe
-                </Button>
+                </SubscriptionButton>
               </CardFooter>
             </Card>
           </div>

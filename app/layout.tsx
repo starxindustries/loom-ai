@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { ErrorBoundary } from "@/components/common/error-boundary";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -35,9 +36,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <NextTopLoader color="#1ca04c" height={4} />
-          {children}
-          <Toaster />
+          <ErrorBoundary>
+            <NextTopLoader color="#1ca04c" height={4} />
+            {children}
+            <Toaster />
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

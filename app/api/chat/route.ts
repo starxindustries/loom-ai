@@ -7,6 +7,7 @@ import {
   formatMemoriesForContext,
   addMemory,
 } from "@/lib/memory";
+import { addMemoryWithLimits } from "@/lib/memory-with-usage-enforcement";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -115,16 +116,36 @@ export async function POST(request: NextRequest) {
             
             hasConfidentialInfo = containsConfidentialInfo(newFacts);
             
-            // Store memories in parallel
-            const memoryPromises = newFacts.map((fact) => 
-              addMemory(user.id, fact, true).catch((error) => {
-                console.error(`[${requestId}] ❌ Failed to store memory:`, error);
-                return null;
-              })
-            );
+            // Store memories with usage limit enforcement
+            const memoryPromises = newFacts.map(async (fact) => {
+              try {
+                const result = await addMemoryWithLimits(user.id, fact, true);
+                if (!result.success) {
+                  if (result.upgradePrompt) {
+                    console.warn(`[${requestId}] ⚠️ Memory limit exceeded for user ${user.id}:`, result.upgradePrompt.message);
+                    // Continue with chat but don't store the memory
+                    return { success: false, upgradePrompt: result.upgradePrompt };
+                  } else {
+                    console.error(`[${requestId}] ❌ Failed to store memory:`, result.error);
+                    return { success: false, error: result.error };
+                  }
+                }
+                return { success: true, memoryId: result.data?.memoryId };
+              } catch (error) {
+                console.error(`[${requestId}] ❌ Memory storage error:`, error);
+                return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+              }
+            });
             
-            await Promise.all(memoryPromises);
-            console.log(`[${requestId}] ✅ Stored ${newFacts.length} memories`);
+            const results = await Promise.all(memoryPromises);
+            const successfulStores = results.filter(r => r.success).length;
+            const upgradePrompts = results.filter(r => r.upgradePrompt).map(r => r.upgradePrompt);
+            
+            console.log(`[${requestId}] ✅ Stored ${successfulStores}/${newFacts.length} memories`);
+            
+            if (upgradePrompts.length > 0) {
+              console.warn(`[${requestId}] ⚠️ ${upgradePrompts.length} memories could not be stored due to usage limits`);
+            }
           }
         }
       }

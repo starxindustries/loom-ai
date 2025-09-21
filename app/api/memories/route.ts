@@ -1,7 +1,9 @@
 // memory API
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { addMemory, addMemoriesBatch, searchMemories, listMemories, deleteMemory } from "@/lib/memory";
+import { usageLimitMiddleware } from "@/lib/usage-limit-middleware";
+import { usageTrackingService } from "@/lib/usage-tracking-service";
 
 // GET - Search memories or list all memories
 export async function GET(request: NextRequest) {
@@ -65,132 +67,102 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Add new memory
-export async function POST(request: NextRequest) {
-  try {
-    const { content, generateEmbedding = true } = await request.json();
+// POST - Add new memory with usage limit enforcement
+export const POST = usageLimitMiddleware.withMemoryLimitCheck(
+  async (request: NextRequest, userId: string): Promise<NextResponse> => {
+    try {
+      const { content, generateEmbedding = true } = await request.json();
 
-    if (!content || typeof content !== "string") {
-      return new Response(
-        JSON.stringify({ error: "Content is required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+      if (!content || typeof content !== "string") {
+        return NextResponse.json(
+          { error: "Content is required" },
+          { status: 400 }
+        );
+      }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+      // The usage limit has already been checked by the middleware
+      // If we reach here, the user is within their limits
+      const result = await addMemory(userId, content, generateEmbedding);
 
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error },
+          { status: 500 }
+        );
+      }
 
-    const result = await addMemory(user.id, content, generateEmbedding);
-
-    if (!result.success) {
-      return new Response(
-        JSON.stringify({ error: result.error }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({
+      // The middleware will automatically increment usage after successful response
+      return NextResponse.json({
         success: true,
         memoryId: result.memoryId,
         message: "Memory stored successfully",
-      }),
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
-  } catch (error) {
-    console.error("Memory storage error:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to store memory" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+      });
+    } catch (error) {
+      console.error("Memory storage error:", error);
+      return NextResponse.json(
+        { error: "Failed to store memory" },
+        { status: 500 }
+      );
+    }
   }
-}
+);
 
-// PUT - Add multiple memories
-export async function PUT(request: NextRequest) {
+// PUT - Add multiple memories with usage limit enforcement
+export async function PUT(request: NextRequest): Promise<NextResponse> {
   try {
     const { memories, generateEmbeddings = true } = await request.json();
 
     if (!memories || !Array.isArray(memories)) {
-      return new Response(
-        JSON.stringify({ error: "Memories array is required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+      return NextResponse.json(
+        { error: "Memories array is required" },
+        { status: 400 }
       );
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        }
+    // Get user ID
+    const userId = await usageLimitMiddleware.getUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'User not authenticated' },
+        { status: 401 }
       );
     }
 
-    const result = await addMemoriesBatch(user.id, memories, generateEmbeddings);
+    // For batch operations, we need to check if user can add all memories
+    // Check current usage and see if adding all memories would exceed limit
+    const currentUsage = await usageTrackingService.getCurrentUsage(userId);
+    const wouldExceedLimit = (currentUsage.memoryCount + memories.length) > currentUsage.memoryLimit;
+
+    if (wouldExceedLimit) {
+      const upgradePrompt = await usageTrackingService.getUpgradePrompt(userId, 'memory');
+      return usageLimitMiddleware.createUsageLimitResponse(upgradePrompt);
+    }
+
+    // Process the batch
+    const result = await addMemoriesBatch(userId, memories, generateEmbeddings);
 
     if (!result.success) {
-      return new Response(
-        JSON.stringify({ error: result.error }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        memoryIds: result.memoryIds,
-        message: `${memories.length} memories stored successfully`,
-      }),
-      {
-        headers: { "Content-Type": "application/json" },
-      }
-    );
+    // Increment usage by the number of memories added
+    for (let i = 0; i < memories.length; i++) {
+      await usageLimitMiddleware.incrementUsageAfterOperation(userId, 'memory');
+    }
+
+    return NextResponse.json({
+      success: true,
+      memoryIds: result.memoryIds,
+      message: `${memories.length} memories stored successfully`,
+    });
   } catch (error) {
     console.error("Batch memory storage error:", error);
-    return new Response(
-      JSON.stringify({ error: "Failed to store memories" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+    return NextResponse.json(
+      { error: "Failed to store memories" },
+      { status: 500 }
     );
   }
 }

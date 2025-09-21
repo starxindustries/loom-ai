@@ -71,3 +71,7 @@ create table public.user_encryption_profiles (
 create trigger update_user_encryption_profiles_updated_at BEFORE
 update on user_encryption_profiles for EACH row
 execute FUNCTION update_updated_at_column ();
+
+-- Note: Additional subscription management tables and functions are available
+-- in the migrations directory. Run the migration files in schema/migrations/
+-- to set up the LemonSqueezy payment integration system.

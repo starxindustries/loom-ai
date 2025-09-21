@@ -2,6 +2,7 @@
 import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
+import { usageLimitMiddleware } from "@/lib/usage-limit-middleware";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -437,7 +438,16 @@ async function storeEncryptedMemories(
   try {
     console.log(`[ENCRYPTED-CHAT-${requestId}] 💾 Storing encrypted memories`);
 
+    // Check usage limits before storing memories
+    const limitCheck = await usageLimitMiddleware.checkUsageLimits(userId, 'memory');
+    if (!limitCheck.allowed && limitCheck.upgradePrompt) {
+      console.warn(`[ENCRYPTED-CHAT-${requestId}] ⚠️ Memory limit exceeded:`, limitCheck.upgradePrompt.message);
+      return; // Don't store memories if limit exceeded
+    }
+
     const supabase = await createClient();
+    let successfulStores = 0;
+    
     const memoryPromises = memoryExtractionData.map(async (memoryData) => {
       try {
         const { error } = await supabase.from("encrypted_memories").insert({
@@ -462,6 +472,8 @@ async function storeEncryptedMemories(
             `[ENCRYPTED-CHAT-${requestId}] ❌ Failed to store encrypted memory:`,
             error
           );
+        } else {
+          successfulStores++;
         }
       } catch (error) {
         console.error(
@@ -472,8 +484,14 @@ async function storeEncryptedMemories(
     });
 
     await Promise.all(memoryPromises);
+    
+    // Increment usage for successfully stored memories
+    for (let i = 0; i < successfulStores; i++) {
+      await usageLimitMiddleware.incrementUsageAfterOperation(userId, 'memory');
+    }
+    
     console.log(
-      `[ENCRYPTED-CHAT-${requestId}] ✅ Stored ${memoryExtractionData.length} encrypted memories`
+      `[ENCRYPTED-CHAT-${requestId}] ✅ Stored ${successfulStores}/${memoryExtractionData.length} encrypted memories`
     );
   } catch (error) {
     console.error(
@@ -616,6 +634,17 @@ async function executeToolCalls(
           `[ENCRYPTED-CHAT-${requestId}] 💾 AI storing memory: "${args.fact}"`
         );
 
+        // Check usage limits before storing memory
+        const limitCheck = await usageLimitMiddleware.checkUsageLimits(userId, 'memory');
+        if (!limitCheck.allowed && limitCheck.upgradePrompt) {
+          console.warn(`[ENCRYPTED-CHAT-${requestId}] ⚠️ Memory limit exceeded:`, limitCheck.upgradePrompt.message);
+          results.push({
+            tool_call_id: toolCall.id,
+            content: `I'd like to store this memory, but you've reached your memory limit. ${limitCheck.upgradePrompt.message}`,
+          });
+          continue;
+        }
+
         if (sessionKey && masterSalt) {
           try {
             // Encrypt the memory server-side using the session key
@@ -651,6 +680,9 @@ async function executeToolCalls(
             if (error) {
               throw error;
             }
+
+            // Increment usage after successful storage
+            await usageLimitMiddleware.incrementUsageAfterOperation(userId, 'memory');
 
             const content = `Perfect! I've securely stored: "${args.fact}" in your encrypted memory.`;
             console.log(
