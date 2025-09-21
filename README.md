@@ -16,7 +16,6 @@
   <a href="#more-supabase-examples"><strong>More Examples</strong></a>
 </p>
 <br/>
-
 ## Features
 
 - Works across the entire [Next.js](https://nextjs.org) stack
