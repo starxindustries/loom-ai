@@ -35,6 +35,10 @@ function BillingPageContent() {
           throw new Error('Failed to fetch usage data');
         }
         const usageData = await usageResponse.json();
+        const parsedUsage = {
+          ...usageData,
+          lastResetAt: usageData?.lastResetAt ? new Date(usageData.lastResetAt) : undefined,
+        };
 
         // Fetch available plans
         const plansResponse = await fetch('/api/subscriptions/plans');
@@ -46,7 +50,7 @@ function BillingPageContent() {
         setBillingData({
           currentPlan: subscriptionData.plan,
           subscription: subscriptionData.subscription,
-          usage: usageData,
+          usage: parsedUsage,
           availablePlans: plansData.plans,
           paymentMethod: subscriptionData.paymentMethod,
           nextBillingDate: subscriptionData.nextBillingDate ? new Date(subscriptionData.nextBillingDate) : undefined,

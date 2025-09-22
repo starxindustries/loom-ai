@@ -1,0 +1,4435 @@
+-- =====================================================
+-- Generated DDL for Database: postgres
+-- Generated on: 2025-09-22 18:40:26.248397+00
+-- =====================================================
+
+-- Tables
+CREATE TABLE auth.audit_log_entries (
+  instance_id UUID,
+  id UUID NOT NULL,
+  payload JSON,
+  created_at TIMESTAMPTZ,
+  ip_address VARCHAR(64) NOT NULL DEFAULT ''::character varying
+);
+CREATE TABLE auth.flow_state (
+  id UUID NOT NULL,
+  user_id UUID,
+  auth_code TEXT NOT NULL,
+  code_challenge_method USER-DEFINED NOT NULL,
+  code_challenge TEXT NOT NULL,
+  provider_type TEXT NOT NULL,
+  provider_access_token TEXT,
+  provider_refresh_token TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  authentication_method TEXT NOT NULL,
+  auth_code_issued_at TIMESTAMPTZ
+);
+CREATE TABLE auth.identities (
+  provider_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
+  identity_data JSONB NOT NULL,
+  provider TEXT NOT NULL,
+  last_sign_in_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  email TEXT,
+  id UUID NOT NULL DEFAULT gen_random_uuid()
+);
+CREATE TABLE auth.instances (
+  id UUID NOT NULL,
+  uuid UUID,
+  raw_base_config TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+CREATE TABLE auth.mfa_amr_claims (
+  session_id UUID NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL,
+  authentication_method TEXT NOT NULL,
+  id UUID NOT NULL
+);
+CREATE TABLE auth.mfa_challenges (
+  id UUID NOT NULL,
+  factor_id UUID NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL,
+  verified_at TIMESTAMPTZ,
+  ip_address INET NOT NULL,
+  otp_code TEXT,
+  web_authn_session_data JSONB
+);
+CREATE TABLE auth.mfa_factors (
+  id UUID NOT NULL,
+  user_id UUID NOT NULL,
+  friendly_name TEXT,
+  factor_type USER-DEFINED NOT NULL,
+  status USER-DEFINED NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL,
+  secret TEXT,
+  phone TEXT,
+  last_challenged_at TIMESTAMPTZ,
+  web_authn_credential JSONB,
+  web_authn_aaguid UUID
+);
+CREATE TABLE auth.oauth_clients (
+  id UUID NOT NULL,
+  client_id TEXT NOT NULL,
+  client_secret_hash TEXT NOT NULL,
+  registration_type USER-DEFINED NOT NULL,
+  redirect_uris TEXT NOT NULL,
+  grant_types TEXT NOT NULL,
+  client_name TEXT,
+  client_uri TEXT,
+  logo_uri TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ
+);
+CREATE TABLE auth.one_time_tokens (
+  id UUID NOT NULL,
+  user_id UUID NOT NULL,
+  token_type USER-DEFINED NOT NULL,
+  token_hash TEXT NOT NULL,
+  relates_to TEXT NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP NOT NULL DEFAULT now()
+);
+CREATE TABLE auth.refresh_tokens (
+  instance_id UUID,
+  id BIGINT NOT NULL DEFAULT nextval('auth.refresh_tokens_id_seq'::regclass),
+  token VARCHAR(255),
+  user_id VARCHAR(255),
+  revoked BOOLEAN,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  parent VARCHAR(255),
+  session_id UUID
+);
+CREATE TABLE auth.saml_providers (
+  id UUID NOT NULL,
+  sso_provider_id UUID NOT NULL,
+  entity_id TEXT NOT NULL,
+  metadata_xml TEXT NOT NULL,
+  metadata_url TEXT,
+  attribute_mapping JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  name_id_format TEXT
+);
+CREATE TABLE auth.saml_relay_states (
+  id UUID NOT NULL,
+  sso_provider_id UUID NOT NULL,
+  request_id TEXT NOT NULL,
+  for_email TEXT,
+  redirect_to TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  flow_state_id UUID
+);
+CREATE TABLE auth.schema_migrations (
+  version VARCHAR(255) NOT NULL
+);
+CREATE TABLE auth.sessions (
+  id UUID NOT NULL,
+  user_id UUID NOT NULL,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  factor_id UUID,
+  aal USER-DEFINED,
+  not_after TIMESTAMPTZ,
+  refreshed_at TIMESTAMP,
+  user_agent TEXT,
+  ip INET,
+  tag TEXT
+);
+CREATE TABLE auth.sso_domains (
+  id UUID NOT NULL,
+  sso_provider_id UUID NOT NULL,
+  domain TEXT NOT NULL,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+);
+CREATE TABLE auth.sso_providers (
+  id UUID NOT NULL,
+  resource_id TEXT,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  disabled BOOLEAN
+);
+CREATE TABLE auth.users (
+  instance_id UUID,
+  id UUID NOT NULL,
+  aud VARCHAR(255),
+  role VARCHAR(255),
+  email VARCHAR(255),
+  encrypted_password VARCHAR(255),
+  email_confirmed_at TIMESTAMPTZ,
+  invited_at TIMESTAMPTZ,
+  confirmation_token VARCHAR(255),
+  confirmation_sent_at TIMESTAMPTZ,
+  recovery_token VARCHAR(255),
+  recovery_sent_at TIMESTAMPTZ,
+  email_change_token_new VARCHAR(255),
+  email_change VARCHAR(255),
+  email_change_sent_at TIMESTAMPTZ,
+  last_sign_in_at TIMESTAMPTZ,
+  raw_app_meta_data JSONB,
+  raw_user_meta_data JSONB,
+  is_super_admin BOOLEAN,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ,
+  phone TEXT DEFAULT NULL::character varying,
+  phone_confirmed_at TIMESTAMPTZ,
+  phone_change TEXT DEFAULT ''::character varying,
+  phone_change_token VARCHAR(255) DEFAULT ''::character varying,
+  phone_change_sent_at TIMESTAMPTZ,
+  confirmed_at TIMESTAMPTZ,
+  email_change_token_current VARCHAR(255) DEFAULT ''::character varying,
+  email_change_confirm_status SMALLINT DEFAULT 0,
+  banned_until TIMESTAMPTZ,
+  reauthentication_token VARCHAR(255) DEFAULT ''::character varying,
+  reauthentication_sent_at TIMESTAMPTZ,
+  is_sso_user BOOLEAN NOT NULL DEFAULT false,
+  deleted_at TIMESTAMPTZ,
+  is_anonymous BOOLEAN NOT NULL DEFAULT false
+);
+CREATE TABLE public.encrypted_memories (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  ciphertext TEXT NOT NULL,
+  wrapped_dek TEXT NOT NULL,
+  dek_salt TEXT NOT NULL,
+  dek_iv TEXT NOT NULL,
+  data_iv TEXT NOT NULL,
+  kdf_algorithm TEXT NOT NULL DEFAULT 'pbkdf2'::text,
+  kdf_iterations INTEGER NOT NULL DEFAULT 100000,
+  encryption_algorithm TEXT NOT NULL DEFAULT 'aes-256-gcm'::text,
+  encrypted_keywords ARRAY,
+  keyword_hints ARRAY,
+  content_type TEXT DEFAULT 'text/plain'::text,
+  content_length INTEGER,
+  is_encrypted BOOLEAN DEFAULT true,
+  version INTEGER DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.error_logs (
+  id VARCHAR(255) NOT NULL,
+  type VARCHAR(100) NOT NULL,
+  severity VARCHAR(20) NOT NULL,
+  message TEXT NOT NULL,
+  user_message TEXT NOT NULL,
+  context JSONB DEFAULT '{}'::jsonb,
+  stack_trace TEXT,
+  resolved BOOLEAN DEFAULT false,
+  resolved_at TIMESTAMPTZ,
+  resolved_by VARCHAR(255),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.subscription_plans (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  name VARCHAR(50) NOT NULL,
+  slug VARCHAR(50) NOT NULL,
+  price_monthly NUMERIC(10,2) NOT NULL,
+  memory_limit INTEGER NOT NULL,
+  file_limit INTEGER NOT NULL,
+  lemonsqueezy_variant_id VARCHAR(255),
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.system_logs (
+  id VARCHAR(255) NOT NULL,
+  level VARCHAR(20) NOT NULL,
+  category VARCHAR(50) NOT NULL,
+  message TEXT NOT NULL,
+  context JSONB DEFAULT '{}'::jsonb,
+  source VARCHAR(100) NOT NULL,
+  tags ARRAY DEFAULT '{}'::text[],
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.usage_tracking (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  memory_count INTEGER DEFAULT 0,
+  file_count INTEGER DEFAULT 0,
+  last_reset_at TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.user_encryption_profiles (
+  user_id UUID NOT NULL,
+  kdf_algorithm TEXT NOT NULL DEFAULT 'pbkdf2'::text,
+  kdf_iterations INTEGER NOT NULL DEFAULT 100000,
+  master_salt TEXT NOT NULL,
+  require_passphrase_verification BOOLEAN DEFAULT true,
+  auto_logout_minutes INTEGER DEFAULT 30,
+  max_failed_attempts INTEGER DEFAULT 5,
+  recovery_hint TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  last_passphrase_change TIMESTAMPTZ DEFAULT now(),
+  is_new BOOLEAN NOT NULL DEFAULT true
+);
+CREATE TABLE public.user_notifications (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  message TEXT NOT NULL,
+  action_url VARCHAR(500),
+  action_text VARCHAR(100),
+  priority VARCHAR(20) NOT NULL DEFAULT 'medium'::character varying,
+  read BOOLEAN DEFAULT false,
+  read_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.user_subscriptions (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  plan_id UUID NOT NULL,
+  lemonsqueezy_subscription_id VARCHAR(255),
+  status VARCHAR(50) NOT NULL DEFAULT 'active'::character varying,
+  current_period_start TIMESTAMPTZ,
+  current_period_end TIMESTAMPTZ,
+  cancel_at_period_end BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.webhook_events (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  event_type VARCHAR(100) NOT NULL,
+  lemonsqueezy_event_id VARCHAR(255),
+  payload JSONB NOT NULL,
+  processed BOOLEAN DEFAULT false,
+  error_message TEXT,
+  retry_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  processed_at TIMESTAMPTZ
+);
+CREATE TABLE realtime.messages (
+  topic TEXT NOT NULL,
+  extension TEXT NOT NULL,
+  payload JSONB,
+  event TEXT,
+  private BOOLEAN DEFAULT false,
+  updated_at TIMESTAMP NOT NULL DEFAULT now(),
+  inserted_at TIMESTAMP NOT NULL DEFAULT now(),
+  id UUID NOT NULL DEFAULT gen_random_uuid()
+);
+CREATE TABLE realtime.schema_migrations (
+  version BIGINT NOT NULL,
+  inserted_at TIMESTAMP
+);
+CREATE TABLE realtime.subscription (
+  id BIGINT NOT NULL,
+  subscription_id UUID NOT NULL,
+  entity REGCLASS NOT NULL,
+  filters ARRAY NOT NULL DEFAULT '{}'::realtime.user_defined_filter[],
+  claims JSONB NOT NULL,
+  claims_role REGROLE NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT timezone('utc'::text, now())
+);
+CREATE TABLE storage.buckets (
+  id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  owner UUID,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  public BOOLEAN DEFAULT false,
+  avif_autodetection BOOLEAN DEFAULT false,
+  file_size_limit BIGINT,
+  allowed_mime_types ARRAY,
+  owner_id TEXT,
+  type USER-DEFINED NOT NULL DEFAULT 'STANDARD'::storage.buckettype
+);
+CREATE TABLE storage.buckets_analytics (
+  id TEXT NOT NULL,
+  type USER-DEFINED NOT NULL DEFAULT 'ANALYTICS'::storage.buckettype,
+  format TEXT NOT NULL DEFAULT 'ICEBERG'::text,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE storage.migrations (
+  id INTEGER NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  hash VARCHAR(40) NOT NULL,
+  executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE storage.objects (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  bucket_id TEXT,
+  name TEXT,
+  owner UUID,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  last_accessed_at TIMESTAMPTZ DEFAULT now(),
+  metadata JSONB,
+  path_tokens ARRAY,
+  version TEXT,
+  owner_id TEXT,
+  user_metadata JSONB,
+  level INTEGER
+);
+CREATE TABLE storage.prefixes (
+  bucket_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  level INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE storage.s3_multipart_uploads (
+  id TEXT NOT NULL,
+  in_progress_size BIGINT NOT NULL DEFAULT 0,
+  upload_signature TEXT NOT NULL,
+  bucket_id TEXT NOT NULL,
+  key TEXT NOT NULL,
+  version TEXT NOT NULL,
+  owner_id TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  user_metadata JSONB
+);
+CREATE TABLE storage.s3_multipart_uploads_parts (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  upload_id TEXT NOT NULL,
+  size BIGINT NOT NULL DEFAULT 0,
+  part_number INTEGER NOT NULL,
+  bucket_id TEXT NOT NULL,
+  key TEXT NOT NULL,
+  etag TEXT NOT NULL,
+  owner_id TEXT,
+  version TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE vault.secrets (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  name TEXT,
+  description TEXT NOT NULL DEFAULT ''::text,
+  secret TEXT NOT NULL,
+  key_id UUID,
+  nonce BYTEA DEFAULT vault._crypto_aead_det_noncegen(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes
+CREATE UNIQUE INDEX amr_id_pk ON auth.mfa_amr_claims USING btree (id);
+CREATE INDEX audit_logs_instance_id_idx ON auth.audit_log_entries USING btree (instance_id);
+CREATE UNIQUE INDEX confirmation_token_idx ON auth.users USING btree (confirmation_token) WHERE ((confirmation_token)::text !~ '^[0-9 ]*$'::text);
+CREATE UNIQUE INDEX email_change_token_current_idx ON auth.users USING btree (email_change_token_current) WHERE ((email_change_token_current)::text !~ '^[0-9 ]*$'::text);
+CREATE UNIQUE INDEX email_change_token_new_idx ON auth.users USING btree (email_change_token_new) WHERE ((email_change_token_new)::text !~ '^[0-9 ]*$'::text);
+CREATE INDEX factor_id_created_at_idx ON auth.mfa_factors USING btree (user_id, created_at);
+CREATE INDEX flow_state_created_at_idx ON auth.flow_state USING btree (created_at DESC);
+CREATE INDEX identities_email_idx ON auth.identities USING btree (email text_pattern_ops);
+CREATE UNIQUE INDEX identities_provider_id_provider_unique ON auth.identities USING btree (provider_id, provider);
+CREATE INDEX identities_user_id_idx ON auth.identities USING btree (user_id);
+CREATE INDEX idx_auth_code ON auth.flow_state USING btree (auth_code);
+CREATE INDEX idx_user_id_auth_method ON auth.flow_state USING btree (user_id, authentication_method);
+CREATE INDEX mfa_challenge_created_at_idx ON auth.mfa_challenges USING btree (created_at DESC);
+CREATE UNIQUE INDEX mfa_factors_last_challenged_at_key ON auth.mfa_factors USING btree (last_challenged_at);
+CREATE UNIQUE INDEX mfa_factors_user_friendly_name_unique ON auth.mfa_factors USING btree (friendly_name, user_id) WHERE (TRIM(BOTH FROM friendly_name) <> ''::text);
+CREATE INDEX mfa_factors_user_id_idx ON auth.mfa_factors USING btree (user_id);
+CREATE INDEX oauth_clients_client_id_idx ON auth.oauth_clients USING btree (client_id);
+CREATE UNIQUE INDEX oauth_clients_client_id_key ON auth.oauth_clients USING btree (client_id);
+CREATE INDEX oauth_clients_deleted_at_idx ON auth.oauth_clients USING btree (deleted_at);
+CREATE INDEX one_time_tokens_relates_to_hash_idx ON auth.one_time_tokens USING hash (relates_to);
+CREATE INDEX one_time_tokens_token_hash_hash_idx ON auth.one_time_tokens USING hash (token_hash);
+CREATE UNIQUE INDEX one_time_tokens_user_id_token_type_key ON auth.one_time_tokens USING btree (user_id, token_type);
+CREATE UNIQUE INDEX reauthentication_token_idx ON auth.users USING btree (reauthentication_token) WHERE ((reauthentication_token)::text !~ '^[0-9 ]*$'::text);
+CREATE UNIQUE INDEX recovery_token_idx ON auth.users USING btree (recovery_token) WHERE ((recovery_token)::text !~ '^[0-9 ]*$'::text);
+CREATE INDEX refresh_tokens_instance_id_idx ON auth.refresh_tokens USING btree (instance_id);
+CREATE INDEX refresh_tokens_instance_id_user_id_idx ON auth.refresh_tokens USING btree (instance_id, user_id);
+CREATE INDEX refresh_tokens_parent_idx ON auth.refresh_tokens USING btree (parent);
+CREATE INDEX refresh_tokens_session_id_revoked_idx ON auth.refresh_tokens USING btree (session_id, revoked);
+CREATE UNIQUE INDEX refresh_tokens_token_unique ON auth.refresh_tokens USING btree (token);
+CREATE INDEX refresh_tokens_updated_at_idx ON auth.refresh_tokens USING btree (updated_at DESC);
+CREATE UNIQUE INDEX saml_providers_entity_id_key ON auth.saml_providers USING btree (entity_id);
+CREATE INDEX saml_providers_sso_provider_id_idx ON auth.saml_providers USING btree (sso_provider_id);
+CREATE INDEX saml_relay_states_created_at_idx ON auth.saml_relay_states USING btree (created_at DESC);
+CREATE INDEX saml_relay_states_for_email_idx ON auth.saml_relay_states USING btree (for_email);
+CREATE INDEX saml_relay_states_sso_provider_id_idx ON auth.saml_relay_states USING btree (sso_provider_id);
+CREATE INDEX sessions_not_after_idx ON auth.sessions USING btree (not_after DESC);
+CREATE INDEX sessions_user_id_idx ON auth.sessions USING btree (user_id);
+CREATE UNIQUE INDEX sso_domains_domain_idx ON auth.sso_domains USING btree (lower(domain));
+CREATE INDEX sso_domains_sso_provider_id_idx ON auth.sso_domains USING btree (sso_provider_id);
+CREATE UNIQUE INDEX sso_providers_resource_id_idx ON auth.sso_providers USING btree (lower(resource_id));
+CREATE INDEX sso_providers_resource_id_pattern_idx ON auth.sso_providers USING btree (resource_id text_pattern_ops);
+CREATE UNIQUE INDEX unique_phone_factor_per_user ON auth.mfa_factors USING btree (user_id, phone);
+CREATE INDEX user_id_created_at_idx ON auth.sessions USING btree (user_id, created_at);
+CREATE UNIQUE INDEX users_email_partial_key ON auth.users USING btree (email) WHERE (is_sso_user = false);
+CREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id, lower((email)::text));
+CREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id);
+CREATE INDEX users_is_anonymous_idx ON auth.users USING btree (is_anonymous);
+CREATE UNIQUE INDEX users_phone_key ON auth.users USING btree (phone);
+CREATE INDEX encrypted_memories_created_at_idx ON public.encrypted_memories USING btree (created_at DESC);
+CREATE INDEX encrypted_memories_keywords_idx ON public.encrypted_memories USING gin (encrypted_keywords);
+CREATE INDEX encrypted_memories_user_id_idx ON public.encrypted_memories USING btree (user_id);
+CREATE INDEX idx_error_logs_created_at ON public.error_logs USING btree (created_at DESC);
+CREATE INDEX idx_error_logs_resolved ON public.error_logs USING btree (resolved);
+CREATE INDEX idx_error_logs_severity ON public.error_logs USING btree (severity);
+CREATE INDEX idx_error_logs_subscription_id ON public.error_logs USING btree (((context ->> 'subscriptionId'::text)));
+CREATE INDEX idx_error_logs_type ON public.error_logs USING btree (type);
+CREATE INDEX idx_error_logs_user_id ON public.error_logs USING btree (((context ->> 'userId'::text)));
+CREATE INDEX idx_system_logs_category ON public.system_logs USING btree (category);
+CREATE INDEX idx_system_logs_created_at ON public.system_logs USING btree (created_at DESC);
+CREATE INDEX idx_system_logs_level ON public.system_logs USING btree (level);
+CREATE INDEX idx_system_logs_operation ON public.system_logs USING btree (((context ->> 'operation'::text)));
+CREATE INDEX idx_system_logs_source ON public.system_logs USING btree (source);
+CREATE INDEX idx_system_logs_subscription_id ON public.system_logs USING btree (((context ->> 'subscriptionId'::text)));
+CREATE INDEX idx_system_logs_user_id ON public.system_logs USING btree (((context ->> 'userId'::text)));
+CREATE INDEX idx_usage_tracking_last_reset ON public.usage_tracking USING btree (last_reset_at);
+CREATE INDEX idx_usage_tracking_user_id ON public.usage_tracking USING btree (user_id);
+CREATE INDEX idx_user_notifications_created_at ON public.user_notifications USING btree (created_at);
+CREATE INDEX idx_user_notifications_priority ON public.user_notifications USING btree (priority);
+CREATE INDEX idx_user_notifications_read ON public.user_notifications USING btree (read);
+CREATE INDEX idx_user_notifications_type ON public.user_notifications USING btree (type);
+CREATE INDEX idx_user_notifications_user_id ON public.user_notifications USING btree (user_id);
+CREATE INDEX idx_user_notifications_user_unread ON public.user_notifications USING btree (user_id, read, created_at);
+CREATE INDEX idx_user_subscriptions_plan_id ON public.user_subscriptions USING btree (plan_id);
+CREATE INDEX idx_user_subscriptions_status ON public.user_subscriptions USING btree (status);
+CREATE INDEX idx_user_subscriptions_user_id ON public.user_subscriptions USING btree (user_id);
+CREATE INDEX subscription_plans_active_idx ON public.subscription_plans USING btree (is_active) WHERE (is_active = true);
+CREATE INDEX subscription_plans_lemonsqueezy_variant_idx ON public.subscription_plans USING btree (lemonsqueezy_variant_id) WHERE (lemonsqueezy_variant_id IS NOT NULL);
+CREATE INDEX subscription_plans_slug_idx ON public.subscription_plans USING btree (slug);
+CREATE UNIQUE INDEX subscription_plans_slug_key ON public.subscription_plans USING btree (slug);
+CREATE UNIQUE INDEX unique_user_usage ON public.usage_tracking USING btree (user_id);
+CREATE INDEX usage_tracking_last_reset_idx ON public.usage_tracking USING btree (last_reset_at);
+CREATE INDEX usage_tracking_user_id_idx ON public.usage_tracking USING btree (user_id);
+CREATE INDEX user_subscriptions_active_idx ON public.user_subscriptions USING btree (user_id, status) WHERE ((status)::text = 'active'::text);
+CREATE INDEX user_subscriptions_lemonsqueezy_id_idx ON public.user_subscriptions USING btree (lemonsqueezy_subscription_id) WHERE (lemonsqueezy_subscription_id IS NOT NULL);
+CREATE UNIQUE INDEX user_subscriptions_lemonsqueezy_subscription_id_key ON public.user_subscriptions USING btree (lemonsqueezy_subscription_id);
+CREATE INDEX user_subscriptions_period_end_idx ON public.user_subscriptions USING btree (current_period_end) WHERE (current_period_end IS NOT NULL);
+CREATE INDEX user_subscriptions_plan_id_idx ON public.user_subscriptions USING btree (plan_id);
+CREATE INDEX user_subscriptions_status_idx ON public.user_subscriptions USING btree (status);
+CREATE INDEX user_subscriptions_user_id_idx ON public.user_subscriptions USING btree (user_id);
+CREATE INDEX user_subscriptions_user_status_period_idx ON public.user_subscriptions USING btree (user_id, status, current_period_end);
+CREATE INDEX webhook_events_created_at_idx ON public.webhook_events USING btree (created_at DESC);
+CREATE INDEX webhook_events_event_type_idx ON public.webhook_events USING btree (event_type);
+CREATE UNIQUE INDEX webhook_events_lemonsqueezy_event_id_key ON public.webhook_events USING btree (lemonsqueezy_event_id);
+CREATE INDEX webhook_events_lemonsqueezy_id_idx ON public.webhook_events USING btree (lemonsqueezy_event_id) WHERE (lemonsqueezy_event_id IS NOT NULL);
+CREATE INDEX webhook_events_processed_idx ON public.webhook_events USING btree (processed) WHERE (processed = false);
+CREATE INDEX webhook_events_retry_idx ON public.webhook_events USING btree (processed, retry_count) WHERE ((processed = false) AND (retry_count < 5));
+CREATE INDEX webhook_events_type_processed_created_idx ON public.webhook_events USING btree (event_type, processed, created_at DESC);
+CREATE INDEX ix_realtime_subscription_entity ON realtime.subscription USING btree (entity);
+CREATE UNIQUE INDEX pk_subscription ON realtime.subscription USING btree (id);
+CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_key ON realtime.subscription USING btree (subscription_id, entity, filters);
+CREATE UNIQUE INDEX bname ON storage.buckets USING btree (name);
+CREATE UNIQUE INDEX bucketid_objname ON storage.objects USING btree (bucket_id, name);
+CREATE INDEX idx_multipart_uploads_list ON storage.s3_multipart_uploads USING btree (bucket_id, key, created_at);
+CREATE UNIQUE INDEX idx_name_bucket_level_unique ON storage.objects USING btree (name COLLATE "C", bucket_id, level);
+CREATE INDEX idx_objects_bucket_id_name ON storage.objects USING btree (bucket_id, name COLLATE "C");
+CREATE INDEX idx_objects_lower_name ON storage.objects USING btree ((path_tokens[level]), lower(name) text_pattern_ops, bucket_id, level);
+CREATE INDEX idx_prefixes_lower_name ON storage.prefixes USING btree (bucket_id, level, ((string_to_array(name, '/'::text))[level]), lower(name) text_pattern_ops);
+CREATE UNIQUE INDEX migrations_name_key ON storage.migrations USING btree (name);
+CREATE INDEX name_prefix_search ON storage.objects USING btree (name text_pattern_ops);
+CREATE UNIQUE INDEX objects_bucket_id_level_idx ON storage.objects USING btree (bucket_id, level, name COLLATE "C");
+CREATE UNIQUE INDEX secrets_name_idx ON vault.secrets USING btree (name) WHERE (name IS NOT NULL);
+
+-- Row Level Security
+ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can delete their own encrypted memories ON public.encrypted_memories FOR DELETE TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can insert their own encrypted memories ON public.encrypted_memories FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can select their own encrypted memories ON public.encrypted_memories FOR SELECT TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update their own encrypted memories ON public.encrypted_memories FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Admins can update error logs ON public.error_logs FOR UPDATE TO public USING ((EXISTS ( SELECT 1
+   FROM auth.users
+  WHERE ((users.id = auth.uid()) AND ((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text)))));
+ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Admins can view error logs ON public.error_logs FOR SELECT TO public USING ((EXISTS ( SELECT 1
+   FROM auth.users
+  WHERE ((users.id = auth.uid()) AND ((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text)))));
+ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY System can insert error logs ON public.error_logs FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY subscription_plans_admin_all ON public.subscription_plans FOR ALL TO public USING ((EXISTS ( SELECT 1
+   FROM auth.users
+  WHERE ((users.id = auth.uid()) AND ((users.email)::text ~~ '%@admin.%'::text)))));
+ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY subscription_plans_public_read ON public.subscription_plans FOR SELECT TO public USING ((is_active = true));
+ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Admins can view logs ON public.system_logs FOR SELECT TO public USING ((EXISTS ( SELECT 1
+   FROM auth.users
+  WHERE ((users.id = auth.uid()) AND ((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text)))));
+ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY System can insert logs ON public.system_logs FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
+CREATE POLICY usage_tracking_own_update ON public.usage_tracking FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
+CREATE POLICY usage_tracking_service_all ON public.usage_tracking FOR ALL TO public USING (((auth.jwt() ->> 'role'::text) = 'service_role'::text));
+ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
+CREATE POLICY usage_tracking_auto_insert ON public.usage_tracking FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
+CREATE POLICY usage_tracking_own_read ON public.usage_tracking FOR SELECT TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can read their own encryption profile ON public.user_encryption_profiles FOR SELECT TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can delete their own encryption profile ON public.user_encryption_profiles FOR DELETE TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update their own encryption profile ON public.user_encryption_profiles FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can create their own encryption profile ON public.user_encryption_profiles FOR INSERT TO public WITH CHECK (((auth.uid() = user_id) OR (auth.uid() IS NULL)));
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Service role can manage encryption profiles ON public.user_encryption_profiles FOR ALL TO public USING ((current_setting('role'::text) = 'service_role'::text)) WITH CHECK ((current_setting('role'::text) = 'service_role'::text));
+ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY System can insert notifications ON public.user_notifications FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update own notifications ON public.user_notifications FOR UPDATE TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can view own notifications ON public.user_notifications FOR SELECT TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_subscriptions_own_update ON public.user_subscriptions FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_subscriptions_own_read ON public.user_subscriptions FOR SELECT TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_subscriptions_service_update ON public.user_subscriptions FOR UPDATE TO public USING ((((auth.jwt() ->> 'role'::text) = 'service_role'::text) OR (auth.uid() = user_id)));
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_subscriptions_service_insert ON public.user_subscriptions FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.webhook_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY webhook_events_service_only ON public.webhook_events FOR ALL TO public USING (((auth.jwt() ->> 'role'::text) = 'service_role'::text));
+
+-- Functions
+CREATE OR REPLACE FUNCTION auth.email()
+RETURNS text
+LANGUAGE sql
+STABLE
+AS $function$
+
+  select 
+  coalesce(
+    nullif(current_setting('request.jwt.claim.email', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'email')
+  )::text
+
+$function$;
+CREATE OR REPLACE FUNCTION auth.jwt()
+RETURNS jsonb
+LANGUAGE sql
+STABLE
+AS $function$
+
+  select 
+    coalesce(
+        nullif(current_setting('request.jwt.claim', true), ''),
+        nullif(current_setting('request.jwt.claims', true), '')
+    )::jsonb
+
+$function$;
+CREATE OR REPLACE FUNCTION auth.role()
+RETURNS text
+LANGUAGE sql
+STABLE
+AS $function$
+
+  select 
+  coalesce(
+    nullif(current_setting('request.jwt.claim.role', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'role')
+  )::text
+
+$function$;
+CREATE OR REPLACE FUNCTION auth.uid()
+RETURNS uuid
+LANGUAGE sql
+STABLE
+AS $function$
+
+  select 
+  coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+  )::uuid
+
+$function$;
+CREATE OR REPLACE FUNCTION extensions.armor(bytea, text[], text[])
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_armor
+$function$;
+CREATE OR REPLACE FUNCTION extensions.armor(bytea)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_armor
+$function$;
+CREATE OR REPLACE FUNCTION extensions.crypt(text, text)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_crypt
+$function$;
+CREATE OR REPLACE FUNCTION extensions.dearmor(text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_dearmor
+$function$;
+CREATE OR REPLACE FUNCTION extensions.decrypt(bytea, bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_decrypt
+$function$;
+CREATE OR REPLACE FUNCTION extensions.decrypt_iv(bytea, bytea, bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_decrypt_iv
+$function$;
+CREATE OR REPLACE FUNCTION extensions.digest(text, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_digest
+$function$;
+CREATE OR REPLACE FUNCTION extensions.digest(bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_digest
+$function$;
+CREATE OR REPLACE FUNCTION extensions.encrypt(bytea, bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_encrypt
+$function$;
+CREATE OR REPLACE FUNCTION extensions.encrypt_iv(bytea, bytea, bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_encrypt_iv
+$function$;
+CREATE OR REPLACE FUNCTION extensions.gen_random_bytes(integer)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_random_bytes
+$function$;
+CREATE OR REPLACE FUNCTION extensions.gen_random_uuid()
+RETURNS uuid
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_random_uuid
+$function$;
+CREATE OR REPLACE FUNCTION extensions.gen_salt(text, integer)
+RETURNS text
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_gen_salt_rounds
+$function$;
+CREATE OR REPLACE FUNCTION extensions.gen_salt(text)
+RETURNS text
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_gen_salt
+$function$;
+CREATE OR REPLACE FUNCTION extensions.grant_pg_cron_access()
+RETURNS event_trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  IF EXISTS (
+    SELECT
+    FROM pg_event_trigger_ddl_commands() AS ev
+    JOIN pg_extension AS ext
+    ON ev.objid = ext.oid
+    WHERE ext.extname = 'pg_cron'
+  )
+  THEN
+    grant usage on schema cron to postgres with grant option;
+
+    alter default privileges in schema cron grant all on tables to postgres with grant option;
+    alter default privileges in schema cron grant all on functions to postgres with grant option;
+    alter default privileges in schema cron grant all on sequences to postgres with grant option;
+
+    alter default privileges for user supabase_admin in schema cron grant all
+        on sequences to postgres with grant option;
+    alter default privileges for user supabase_admin in schema cron grant all
+        on tables to postgres with grant option;
+    alter default privileges for user supabase_admin in schema cron grant all
+        on functions to postgres with grant option;
+
+    grant all privileges on all tables in schema cron to postgres with grant option;
+    revoke all on table cron.job from postgres;
+    grant select on table cron.job to postgres with grant option;
+  END IF;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION extensions.grant_pg_graphql_access()
+RETURNS event_trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    func_is_graphql_resolve bool;
+BEGIN
+    func_is_graphql_resolve = (
+        SELECT n.proname = 'resolve'
+        FROM pg_event_trigger_ddl_commands() AS ev
+        LEFT JOIN pg_catalog.pg_proc AS n
+        ON ev.objid = n.oid
+    );
+
+    IF func_is_graphql_resolve
+    THEN
+        -- Update public wrapper to pass all arguments through to the pg_graphql resolve func
+        DROP FUNCTION IF EXISTS graphql_public.graphql;
+        create or replace function graphql_public.graphql(
+            "operationName" text default null,
+            query text default null,
+            variables jsonb default null,
+            extensions jsonb default null
+        )
+            returns jsonb
+            language sql
+        as $$
+            select graphql.resolve(
+                query := query,
+                variables := coalesce(variables, '{}'),
+                "operationName" := "operationName",
+                extensions := extensions
+            );
+        $$;
+
+        -- This hook executes when `graphql.resolve` is created. That is not necessarily the last
+        -- function in the extension so we need to grant permissions on existing entities AND
+        -- update default permissions to any others that are created after `graphql.resolve`
+        grant usage on schema graphql to postgres, anon, authenticated, service_role;
+        grant select on all tables in schema graphql to postgres, anon, authenticated, service_role;
+        grant execute on all functions in schema graphql to postgres, anon, authenticated, service_role;
+        grant all on all sequences in schema graphql to postgres, anon, authenticated, service_role;
+        alter default privileges in schema graphql grant all on tables to postgres, anon, authenticated, service_role;
+        alter default privileges in schema graphql grant all on functions to postgres, anon, authenticated, service_role;
+        alter default privileges in schema graphql grant all on sequences to postgres, anon, authenticated, service_role;
+
+        -- Allow postgres role to allow granting usage on graphql and graphql_public schemas to custom roles
+        grant usage on schema graphql_public to postgres with grant option;
+        grant usage on schema graphql to postgres with grant option;
+    END IF;
+
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION extensions.grant_pg_net_access()
+RETURNS event_trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_event_trigger_ddl_commands() AS ev
+    JOIN pg_extension AS ext
+    ON ev.objid = ext.oid
+    WHERE ext.extname = 'pg_net'
+  )
+  THEN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_roles
+      WHERE rolname = 'supabase_functions_admin'
+    )
+    THEN
+      CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION;
+    END IF;
+
+    GRANT USAGE ON SCHEMA net TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+
+    IF EXISTS (
+      SELECT FROM pg_extension
+      WHERE extname = 'pg_net'
+      -- all versions in use on existing projects as of 2025-02-20
+      -- version 0.12.0 onwards don't need these applied
+      AND extversion IN ('0.2', '0.6', '0.7', '0.7.1', '0.8', '0.10.0', '0.11.0')
+    ) THEN
+      ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
+      ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SECURITY DEFINER;
+
+      ALTER function net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
+      ALTER function net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) SET search_path = net;
+
+      REVOKE ALL ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
+      REVOKE ALL ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) FROM PUBLIC;
+
+      GRANT EXECUTE ON FUNCTION net.http_get(url text, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+      GRANT EXECUTE ON FUNCTION net.http_post(url text, body jsonb, params jsonb, headers jsonb, timeout_milliseconds integer) TO supabase_functions_admin, postgres, anon, authenticated, service_role;
+    END IF;
+  END IF;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION extensions.hmac(text, text, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_hmac
+$function$;
+CREATE OR REPLACE FUNCTION extensions.hmac(bytea, bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pg_hmac
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pg_stat_statements(boolean)
+RETURNS record
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_stat_statements_1_11
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pg_stat_statements_info()
+RETURNS record
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_stat_statements_info
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pg_stat_statements_reset(oid, oid, bigint, boolean)
+RETURNS timestamp with time zone
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_stat_statements_reset_1_11
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_armor_headers(text)
+RETURNS record
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_armor_headers
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_key_id(bytea)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_key_id_w
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_pub_decrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_pub_decrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_pub_decrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_pub_decrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_pub_decrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_pub_decrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_encrypt(text, bytea, text)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_pub_encrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_encrypt(text, bytea)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_pub_encrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea, text)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_pub_encrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_pub_encrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text, text)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_sym_decrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_sym_decrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_sym_decrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_sym_decrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt(text, text)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_sym_encrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt(text, text, text)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_sym_encrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_sym_encrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text, text)
+RETURNS bytea
+LANGUAGE c
+VOLATILE
+AS $function$
+pgp_sym_encrypt_bytea
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgrst_ddl_watch()
+RETURNS event_trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  cmd record;
+BEGIN
+  FOR cmd IN SELECT * FROM pg_event_trigger_ddl_commands()
+  LOOP
+    IF cmd.command_tag IN (
+      'CREATE SCHEMA', 'ALTER SCHEMA'
+    , 'CREATE TABLE', 'CREATE TABLE AS', 'SELECT INTO', 'ALTER TABLE'
+    , 'CREATE FOREIGN TABLE', 'ALTER FOREIGN TABLE'
+    , 'CREATE VIEW', 'ALTER VIEW'
+    , 'CREATE MATERIALIZED VIEW', 'ALTER MATERIALIZED VIEW'
+    , 'CREATE FUNCTION', 'ALTER FUNCTION'
+    , 'CREATE TRIGGER'
+    , 'CREATE TYPE', 'ALTER TYPE'
+    , 'CREATE RULE'
+    , 'COMMENT'
+    )
+    -- don't notify in case of CREATE TEMP table or other objects created on pg_temp
+    AND cmd.schema_name is distinct from 'pg_temp'
+    THEN
+      NOTIFY pgrst, 'reload schema';
+    END IF;
+  END LOOP;
+END; 
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgrst_drop_watch()
+RETURNS event_trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  obj record;
+BEGIN
+  FOR obj IN SELECT * FROM pg_event_trigger_dropped_objects()
+  LOOP
+    IF obj.object_type IN (
+      'schema'
+    , 'table'
+    , 'foreign table'
+    , 'view'
+    , 'materialized view'
+    , 'function'
+    , 'trigger'
+    , 'type'
+    , 'rule'
+    )
+    AND obj.is_temporary IS false -- no pg_temp objects
+    THEN
+      NOTIFY pgrst, 'reload schema';
+    END IF;
+  END LOOP;
+END; 
+$function$;
+CREATE OR REPLACE FUNCTION extensions.set_graphql_placeholder()
+RETURNS event_trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+    DECLARE
+    graphql_is_dropped bool;
+    BEGIN
+    graphql_is_dropped = (
+        SELECT ev.schema_name = 'graphql_public'
+        FROM pg_event_trigger_dropped_objects() AS ev
+        WHERE ev.schema_name = 'graphql_public'
+    );
+
+    IF graphql_is_dropped
+    THEN
+        create or replace function graphql_public.graphql(
+            "operationName" text default null,
+            query text default null,
+            variables jsonb default null,
+            extensions jsonb default null
+        )
+            returns jsonb
+            language plpgsql
+        as $$
+            DECLARE
+                server_version float;
+            BEGIN
+                server_version = (SELECT (SPLIT_PART((select version()), ' ', 2))::float);
+
+                IF server_version >= 14 THEN
+                    RETURN jsonb_build_object(
+                        'errors', jsonb_build_array(
+                            jsonb_build_object(
+                                'message', 'pg_graphql extension is not enabled.'
+                            )
+                        )
+                    );
+                ELSE
+                    RETURN jsonb_build_object(
+                        'errors', jsonb_build_array(
+                            jsonb_build_object(
+                                'message', 'pg_graphql is only available on projects running Postgres 14 onwards.'
+                            )
+                        )
+                    );
+                END IF;
+            END;
+        $$;
+    END IF;
+
+    END;
+
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_generate_v1()
+RETURNS uuid
+LANGUAGE c
+VOLATILE
+AS $function$
+uuid_generate_v1
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_generate_v1mc()
+RETURNS uuid
+LANGUAGE c
+VOLATILE
+AS $function$
+uuid_generate_v1mc
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_generate_v3(uuid, text)
+RETURNS uuid
+LANGUAGE c
+IMMUTABLE
+AS $function$
+uuid_generate_v3
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_generate_v4()
+RETURNS uuid
+LANGUAGE c
+VOLATILE
+AS $function$
+uuid_generate_v4
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_generate_v5(uuid, text)
+RETURNS uuid
+LANGUAGE c
+IMMUTABLE
+AS $function$
+uuid_generate_v5
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_nil()
+RETURNS uuid
+LANGUAGE c
+IMMUTABLE
+AS $function$
+uuid_nil
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_ns_dns()
+RETURNS uuid
+LANGUAGE c
+IMMUTABLE
+AS $function$
+uuid_ns_dns
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_ns_oid()
+RETURNS uuid
+LANGUAGE c
+IMMUTABLE
+AS $function$
+uuid_ns_oid
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_ns_url()
+RETURNS uuid
+LANGUAGE c
+IMMUTABLE
+AS $function$
+uuid_ns_url
+$function$;
+CREATE OR REPLACE FUNCTION extensions.uuid_ns_x500()
+RETURNS uuid
+LANGUAGE c
+IMMUTABLE
+AS $function$
+uuid_ns_x500
+$function$;
+CREATE OR REPLACE FUNCTION graphql._internal_resolve(text, jsonb, text, jsonb)
+RETURNS jsonb
+LANGUAGE c
+VOLATILE
+AS $function$
+resolve_wrapper
+$function$;
+CREATE OR REPLACE FUNCTION graphql.comment_directive(text)
+RETURNS jsonb
+LANGUAGE sql
+IMMUTABLE
+AS $function$
+
+    /*
+    comment on column public.account.name is '@graphql.name: myField'
+    */
+    select
+        coalesce(
+            (
+                regexp_match(
+                    comment_,
+                    '@graphql\((.+)\)'
+                )
+            )[1]::jsonb,
+            jsonb_build_object()
+        )
+
+$function$;
+CREATE OR REPLACE FUNCTION graphql.exception(text)
+RETURNS text
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+begin
+    raise exception using errcode='22000', message=message;
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION graphql.get_schema_version()
+RETURNS integer
+LANGUAGE sql
+VOLATILE
+AS $function$
+
+    select last_value from graphql.seq_schema_version;
+
+$function$;
+CREATE OR REPLACE FUNCTION graphql.increment_schema_version()
+RETURNS event_trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+begin
+    perform pg_catalog.nextval('graphql.seq_schema_version');
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION graphql.resolve(text, jsonb, text, jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+declare
+    res jsonb;
+    message_text text;
+begin
+  begin
+    select graphql._internal_resolve("query" := "query",
+                                     "variables" := "variables",
+                                     "operationName" := "operationName",
+                                     "extensions" := "extensions") into res;
+    return res;
+  exception
+    when others then
+    get stacked diagnostics message_text = message_text;
+    return
+    jsonb_build_object('data', null,
+                       'errors', jsonb_build_array(jsonb_build_object('message', message_text)));
+  end;
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION graphql_public.graphql(text, text, jsonb, jsonb)
+RETURNS jsonb
+LANGUAGE sql
+VOLATILE
+AS $function$
+
+            select graphql.resolve(
+                query := query,
+                variables := coalesce(variables, '{}'),
+                "operationName" := "operationName",
+                extensions := extensions
+            );
+        
+$function$;
+CREATE OR REPLACE FUNCTION pgbouncer.get_auth(text)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+begin
+    raise debug 'PgBouncer auth request: %', p_usename;
+
+    return query
+    select 
+        rolname::text, 
+        case when rolvaliduntil < now() 
+            then null 
+            else rolpassword::text 
+        end 
+    from pg_authid 
+    where rolname=$1 and rolcanlogin;
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(double precision[], integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(real[], integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(integer[], integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(numeric[], integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_sparsevec(integer[], integer, boolean)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_sparsevec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_sparsevec(numeric[], integer, boolean)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_sparsevec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_sparsevec(double precision[], integer, boolean)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_sparsevec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_sparsevec(real[], integer, boolean)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_sparsevec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_vector(double precision[], integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_vector(numeric[], integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_vector(integer[], integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_vector(real[], integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.avg(halfvec)
+RETURNS halfvec
+LANGUAGE internal
+IMMUTABLE
+AS $function$
+aggregate_dummy
+$function$;
+CREATE OR REPLACE FUNCTION public.avg(vector)
+RETURNS vector
+LANGUAGE internal
+IMMUTABLE
+AS $function$
+aggregate_dummy
+$function$;
+CREATE OR REPLACE FUNCTION public.binary_quantize(vector)
+RETURNS bit
+LANGUAGE c
+IMMUTABLE
+AS $function$
+binary_quantize
+$function$;
+CREATE OR REPLACE FUNCTION public.binary_quantize(halfvec)
+RETURNS bit
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_binary_quantize
+$function$;
+CREATE OR REPLACE FUNCTION public.can_user_perform_action(uuid, character varying)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_current_count INTEGER;
+    v_limit INTEGER;
+    v_subscription RECORD;
+BEGIN
+    -- Get user's current subscription and limits
+    SELECT * INTO v_subscription 
+    FROM get_user_subscription_with_plan(p_user_id);
+    
+    -- If no active subscription found, use free plan limits
+    IF v_subscription IS NULL THEN
+        IF p_action_type = 'memory' THEN
+            v_limit := 20; -- Free plan memory limit
+        ELSIF p_action_type = 'file' THEN
+            v_limit := 2; -- Free plan file limit
+        ELSE
+            RETURN FALSE;
+        END IF;
+    ELSE
+        IF p_action_type = 'memory' THEN
+            v_limit := v_subscription.memory_limit;
+        ELSIF p_action_type = 'file' THEN
+            v_limit := v_subscription.file_limit;
+        ELSE
+            RETURN FALSE;
+        END IF;
+    END IF;
+    
+    -- Get current usage count
+    IF p_action_type = 'memory' THEN
+        SELECT COALESCE(memory_count, 0) INTO v_current_count
+        FROM usage_tracking
+        WHERE user_id = p_user_id;
+    ELSIF p_action_type = 'file' THEN
+        SELECT COALESCE(file_count, 0) INTO v_current_count
+        FROM usage_tracking
+        WHERE user_id = p_user_id;
+    END IF;
+    
+    -- If no usage record exists, assume 0 usage
+    v_current_count := COALESCE(v_current_count, 0);
+    
+    -- Check if user is within limits
+    RETURN v_current_count < v_limit;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.cleanup_old_error_logs()
+RETURNS integer
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  deleted_count INTEGER := 0;
+BEGIN
+  -- Delete error logs older than 90 days
+  DELETE FROM public.error_logs 
+  WHERE created_at < NOW() - INTERVAL '90 days';
+  
+  GET DIAGNOSTICS deleted_count = ROW_COUNT;
+  
+  RAISE NOTICE 'Deleted % old error logs', deleted_count;
+  RETURN deleted_count;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.cleanup_old_notifications()
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  -- Delete notifications older than 90 days that have been read
+  DELETE FROM public.user_notifications 
+  WHERE read = true 
+    AND created_at < NOW() - INTERVAL '90 days';
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.cleanup_old_system_logs()
+RETURNS integer
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  deleted_count INTEGER := 0;
+  debug_info_count INTEGER := 0;
+  other_count INTEGER := 0;
+BEGIN
+  -- Delete debug and info logs older than 30 days
+  DELETE FROM public.system_logs 
+  WHERE level IN ('debug', 'info')
+  AND created_at < NOW() - INTERVAL '30 days';
+  
+  GET DIAGNOSTICS debug_info_count = ROW_COUNT;
+  
+  -- Delete other logs older than 90 days
+  DELETE FROM public.system_logs 
+  WHERE level IN ('warn', 'error', 'critical')
+  AND created_at < NOW() - INTERVAL '90 days';
+  
+  GET DIAGNOSTICS other_count = ROW_COUNT;
+  
+  deleted_count := debug_info_count + other_count;
+  
+  RAISE NOTICE 'Deleted % old system logs (% debug/info, % warn/error/critical)', 
+    deleted_count, debug_info_count, other_count;
+  RETURN deleted_count;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.cleanup_orphaned_usage_records()
+RETURNS integer
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    deleted_count INTEGER := 0;
+BEGIN
+    -- Delete usage records for users that no longer exist
+    DELETE FROM public.usage_tracking 
+    WHERE user_id NOT IN (SELECT id FROM auth.users);
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    RAISE NOTICE 'Deleted % orphaned usage records', deleted_count;
+    RETURN deleted_count;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.cosine_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+cosine_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.cosine_distance(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_cosine_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.cosine_distance(sparsevec, sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_cosine_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.ensure_single_active_subscription()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    -- If the new/updated subscription is active, deactivate others
+    IF NEW.status = 'active' THEN
+        UPDATE user_subscriptions 
+        SET status = 'cancelled', updated_at = NOW()
+        WHERE user_id = NEW.user_id 
+        AND id != NEW.id 
+        AND status = 'active';
+    END IF;
+    
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.get_error_statistics(timestamp with time zone, timestamp with time zone, character varying)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  start_date_filter TIMESTAMP WITH TIME ZONE;
+  end_date_filter TIMESTAMP WITH TIME ZONE;
+BEGIN
+  -- Set default date range if not provided
+  start_date_filter := COALESCE(p_start_date, NOW() - INTERVAL '30 days');
+  end_date_filter := COALESCE(p_end_date, NOW());
+  
+  RETURN QUERY
+  SELECT 
+    COUNT(*) as total_errors,
+    jsonb_object_agg(type, type_count) as errors_by_type,
+    jsonb_object_agg(severity, severity_count) as errors_by_severity,
+    jsonb_agg(
+      jsonb_build_object(
+        'id', id,
+        'type', type,
+        'severity', severity,
+        'message', message,
+        'created_at', created_at,
+        'resolved', resolved
+      ) ORDER BY created_at DESC
+    ) as recent_errors
+  FROM (
+    SELECT 
+      el.*,
+      COUNT(*) OVER (PARTITION BY el.type) as type_count,
+      COUNT(*) OVER (PARTITION BY el.severity) as severity_count
+    FROM public.error_logs el
+    WHERE 
+      el.created_at >= start_date_filter
+      AND el.created_at <= end_date_filter
+      AND (p_severity IS NULL OR el.severity = p_severity)
+  ) grouped_errors;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.get_migration_stats()
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    RETURN QUERY
+    SELECT 
+        (SELECT COUNT(*)::INTEGER FROM auth.users) as total_users,
+        (SELECT COUNT(*)::INTEGER FROM public.user_subscriptions) as users_with_subscriptions,
+        (SELECT COUNT(*)::INTEGER 
+         FROM public.user_subscriptions us
+         JOIN public.subscription_plans sp ON us.plan_id = sp.id
+         WHERE sp.slug = 'free') as users_with_free_plan,
+        (SELECT COUNT(*)::INTEGER 
+         FROM public.user_subscriptions us
+         JOIN public.subscription_plans sp ON us.plan_id = sp.id
+         WHERE sp.slug != 'free') as users_with_paid_plan,
+        (SELECT COUNT(*)::INTEGER 
+         FROM auth.users u
+         LEFT JOIN public.user_subscriptions us ON u.id = us.user_id
+         WHERE us.id IS NULL) as users_without_subscription,
+        (SELECT COUNT(*)::INTEGER FROM public.usage_tracking) as total_usage_records;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.get_system_log_statistics(timestamp with time zone, timestamp with time zone)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  start_date_filter TIMESTAMP WITH TIME ZONE;
+  end_date_filter TIMESTAMP WITH TIME ZONE;
+BEGIN
+  -- Set default date range if not provided
+  start_date_filter := COALESCE(p_start_date, NOW() - INTERVAL '24 hours');
+  end_date_filter := COALESCE(p_end_date, NOW());
+  
+  RETURN QUERY
+  SELECT 
+    COUNT(*) as total_logs,
+    jsonb_object_agg(level, level_count) as logs_by_level,
+    jsonb_object_agg(category, category_count) as logs_by_category,
+    jsonb_object_agg(source, source_count) as logs_by_source,
+    jsonb_agg(
+      jsonb_build_object(
+        'id', id,
+        'level', level,
+        'category', category,
+        'message', message,
+        'source', source,
+        'created_at', created_at
+      ) ORDER BY created_at DESC
+    ) as recent_errors
+  FROM (
+    SELECT 
+      sl.*,
+      COUNT(*) OVER (PARTITION BY sl.level) as level_count,
+      COUNT(*) OVER (PARTITION BY sl.category) as category_count,
+      COUNT(*) OVER (PARTITION BY sl.source) as source_count
+    FROM public.system_logs sl
+    WHERE 
+      sl.created_at >= start_date_filter
+      AND sl.created_at <= end_date_filter
+      AND sl.level IN ('error', 'critical')
+  ) grouped_logs;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.get_user_subscription_with_plan(uuid)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    RETURN QUERY
+    SELECT 
+        us.id,
+        us.plan_id,
+        sp.name,
+        sp.slug,
+        sp.memory_limit,
+        sp.file_limit,
+        us.status,
+        us.current_period_start,
+        us.current_period_end,
+        us.cancel_at_period_end
+    FROM user_subscriptions us
+    JOIN subscription_plans sp ON us.plan_id = sp.id
+    WHERE us.user_id = p_user_id
+    AND us.status IN ('active', 'trialing')
+    ORDER BY us.created_at DESC
+    LIMIT 1;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.get_user_usage_stats(uuid)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_subscription RECORD;
+    v_usage RECORD;
+BEGIN
+    -- Get user's current subscription and limits
+    SELECT * INTO v_subscription 
+    FROM get_user_subscription_with_plan(p_user_id);
+    
+    -- Get current usage
+    SELECT 
+        COALESCE(ut.memory_count, 0) as memory_count,
+        COALESCE(ut.file_count, 0) as file_count,
+        COALESCE(ut.last_reset_at, NOW()) as last_reset_at
+    INTO v_usage
+    FROM usage_tracking ut
+    WHERE ut.user_id = p_user_id;
+    
+    -- If no usage record, create default values
+    IF v_usage IS NULL THEN
+        v_usage.memory_count := 0;
+        v_usage.file_count := 0;
+        v_usage.last_reset_at := NOW();
+    END IF;
+    
+    -- Set limits based on subscription or free plan
+    IF v_subscription IS NULL THEN
+        -- Free plan limits
+        memory_limit := 20;
+        file_limit := 2;
+    ELSE
+        memory_limit := v_subscription.memory_limit;
+        file_limit := v_subscription.file_limit;
+    END IF;
+    
+    -- Calculate usage
+    memory_count := v_usage.memory_count;
+    file_count := v_usage.file_count;
+    last_reset_at := v_usage.last_reset_at;
+    
+    -- Calculate percentages
+    memory_percentage := CASE 
+        WHEN memory_limit > 0 THEN ROUND((memory_count::DECIMAL / memory_limit::DECIMAL) * 100, 2)
+        ELSE 0 
+    END;
+    
+    file_percentage := CASE 
+        WHEN file_limit > 0 THEN ROUND((file_count::DECIMAL / file_limit::DECIMAL) * 100, 2)
+        ELSE 0 
+    END;
+    
+    RETURN NEXT;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec(halfvec, integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_accum(double precision[], halfvec)
+RETURNS double precision[]
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_accum
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_add(halfvec, halfvec)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_add
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_avg(double precision[])
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_avg
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_cmp(halfvec, halfvec)
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_cmp
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_combine(double precision[], double precision[])
+RETURNS double precision[]
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_combine
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_concat(halfvec, halfvec)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_concat
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_eq(halfvec, halfvec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_eq
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_ge(halfvec, halfvec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_ge
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_gt(halfvec, halfvec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_gt
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_in(cstring, oid, integer)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_in
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_l2_squared_distance(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_l2_squared_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_le(halfvec, halfvec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_le
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_lt(halfvec, halfvec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_lt
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_mul(halfvec, halfvec)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_mul
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_ne(halfvec, halfvec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_ne
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_negative_inner_product(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_negative_inner_product
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_out(halfvec)
+RETURNS cstring
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_out
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_recv(internal, oid, integer)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_recv
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_send(halfvec)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_send
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_spherical_distance(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_spherical_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_sub(halfvec, halfvec)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_sub
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_to_float4(halfvec, integer, boolean)
+RETURNS real[]
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_to_float4
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_to_sparsevec(halfvec, integer, boolean)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_to_sparsevec
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_to_vector(halfvec, integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.halfvec_typmod_in(cstring[])
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_typmod_in
+$function$;
+CREATE OR REPLACE FUNCTION public.hamming_distance(bit, bit)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+hamming_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.hnsw_bit_support(internal)
+RETURNS internal
+LANGUAGE c
+VOLATILE
+AS $function$
+hnsw_bit_support
+$function$;
+CREATE OR REPLACE FUNCTION public.hnsw_halfvec_support(internal)
+RETURNS internal
+LANGUAGE c
+VOLATILE
+AS $function$
+hnsw_halfvec_support
+$function$;
+CREATE OR REPLACE FUNCTION public.hnsw_sparsevec_support(internal)
+RETURNS internal
+LANGUAGE c
+VOLATILE
+AS $function$
+hnsw_sparsevec_support
+$function$;
+CREATE OR REPLACE FUNCTION public.hnswhandler(internal)
+RETURNS index_am_handler
+LANGUAGE c
+VOLATILE
+AS $function$
+hnswhandler
+$function$;
+CREATE OR REPLACE FUNCTION public.increment_usage_count(uuid, character varying)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_can_perform BOOLEAN;
+BEGIN
+    -- Check if user can perform the action
+    SELECT can_user_perform_action(p_user_id, p_action_type) INTO v_can_perform;
+    
+    IF NOT v_can_perform THEN
+        RETURN FALSE;
+    END IF;
+    
+    -- Insert or update usage tracking
+    INSERT INTO usage_tracking (user_id, memory_count, file_count)
+    VALUES (
+        p_user_id,
+        CASE WHEN p_action_type = 'memory' THEN 1 ELSE 0 END,
+        CASE WHEN p_action_type = 'file' THEN 1 ELSE 0 END
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+        memory_count = CASE 
+            WHEN p_action_type = 'memory' THEN usage_tracking.memory_count + 1 
+            ELSE usage_tracking.memory_count 
+        END,
+        file_count = CASE 
+            WHEN p_action_type = 'file' THEN usage_tracking.file_count + 1 
+            ELSE usage_tracking.file_count 
+        END,
+        updated_at = NOW();
+    
+    RETURN TRUE;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.initialize_user_encryption_profile()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  -- Insert the encryption profile with explicit permissions
+  INSERT INTO public.user_encryption_profiles (
+    user_id, 
+    master_salt,
+    kdf_algorithm,
+    kdf_iterations,
+    require_passphrase_verification,
+    auto_logout_minutes,
+    max_failed_attempts,
+    is_new
+  ) VALUES (
+    NEW.id,
+    encode(gen_random_bytes(32), 'base64'),
+    'pbkdf2',
+    100000,
+    true,
+    30,
+    5,
+    true  -- Mark as new user for recovery keys dialog
+  );
+  
+  RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- Log the error but don't fail the user creation
+    RAISE WARNING 'Failed to create encryption profile for user %: %', NEW.id, SQLERRM;
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.initialize_user_usage_tracking()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    -- Create usage tracking record for new subscription
+    INSERT INTO usage_tracking (user_id, memory_count, file_count)
+    VALUES (NEW.user_id, 0, 0)
+    ON CONFLICT (user_id) DO NOTHING;
+    
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.inner_product(sparsevec, sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_inner_product
+$function$;
+CREATE OR REPLACE FUNCTION public.inner_product(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_inner_product
+$function$;
+CREATE OR REPLACE FUNCTION public.inner_product(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+inner_product
+$function$;
+CREATE OR REPLACE FUNCTION public.ivfflat_bit_support(internal)
+RETURNS internal
+LANGUAGE c
+VOLATILE
+AS $function$
+ivfflat_bit_support
+$function$;
+CREATE OR REPLACE FUNCTION public.ivfflat_halfvec_support(internal)
+RETURNS internal
+LANGUAGE c
+VOLATILE
+AS $function$
+ivfflat_halfvec_support
+$function$;
+CREATE OR REPLACE FUNCTION public.ivfflathandler(internal)
+RETURNS index_am_handler
+LANGUAGE c
+VOLATILE
+AS $function$
+ivfflathandler
+$function$;
+CREATE OR REPLACE FUNCTION public.jaccard_distance(bit, bit)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+jaccard_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l1_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+l1_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l1_distance(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_l1_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l1_distance(sparsevec, sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_l1_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+l2_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_distance(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_l2_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_distance(sparsevec, sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_l2_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_norm(halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_l2_norm
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_norm(sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_l2_norm
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_normalize(halfvec)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_l2_normalize
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_normalize(sparsevec)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_l2_normalize
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_normalize(vector)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+l2_normalize
+$function$;
+CREATE OR REPLACE FUNCTION public.log_webhook_processing()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    -- Update processed_at timestamp when processed status changes to true
+    IF NEW.processed = true AND (OLD.processed IS NULL OR OLD.processed = false) THEN
+        NEW.processed_at = NOW();
+    END IF;
+    
+    -- Increment retry count if processing failed
+    IF NEW.processed = false AND NEW.error_message IS NOT NULL THEN
+        IF OLD.retry_count IS NULL THEN
+            NEW.retry_count = 1;
+        ELSE
+            NEW.retry_count = OLD.retry_count + 1;
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.match_memories(uuid, vector, double precision, integer)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  RETURN QUERY
+  SELECT 
+    m.id,
+    m.content,
+    m.created_at,
+    (1 - (m.embedding <=> query_embedding)) as similarity
+  FROM memories m
+  WHERE m.user_id = user_id_param
+    AND m.embedding IS NOT NULL
+    AND (1 - (m.embedding <=> query_embedding)) > match_threshold
+  ORDER BY m.embedding <=> query_embedding
+  LIMIT match_count;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.match_memories(uuid, text, double precision, integer)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  RETURN QUERY
+  SELECT 
+    m.id,
+    m.content,
+    m.created_at,
+    (1 - (m.embedding <=> query_text::vector)) as similarity
+  FROM memories m
+  WHERE m.user_id = user_id_param
+    AND m.embedding IS NOT NULL
+    AND (1 - (m.embedding <=> query_text::vector)) > match_threshold
+  ORDER BY m.embedding <=> query_text::vector
+  LIMIT match_count;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.match_memories(uuid, vector, integer, double precision)
+RETURNS record
+LANGUAGE sql
+STABLE
+AS $function$
+
+  select
+    m.id,
+    m.content,
+    1 - (m.embedding <=> query_embedding) as similarity
+  from memories m
+  where m.user_id = p_user_id
+  and 1 - (m.embedding <=> query_embedding) > match_threshold
+  order by m.embedding <=> query_embedding
+  limit match_count;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.match_memories_text(uuid, text, integer)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  RETURN QUERY
+  SELECT 
+    m.id,
+    m.content,
+    m.created_at,
+    ts_rank(to_tsvector('english', m.content), plainto_tsquery('english', query_text)) as rank
+  FROM memories m
+  WHERE m.user_id = user_id_param
+    AND to_tsvector('english', m.content) @@ plainto_tsquery('english', query_text)
+  ORDER BY rank DESC
+  LIMIT match_count;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.migrate_user_to_free_plan(uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    free_plan_id UUID;
+    user_exists BOOLEAN;
+    subscription_exists BOOLEAN;
+BEGIN
+    -- Check if user exists
+    SELECT EXISTS(SELECT 1 FROM auth.users WHERE id = p_user_id) INTO user_exists;
+    
+    IF NOT user_exists THEN
+        RAISE WARNING 'User % does not exist', p_user_id;
+        RETURN FALSE;
+    END IF;
+    
+    -- Check if user already has a subscription
+    SELECT EXISTS(SELECT 1 FROM public.user_subscriptions WHERE user_id = p_user_id) INTO subscription_exists;
+    
+    IF subscription_exists THEN
+        RAISE WARNING 'User % already has a subscription', p_user_id;
+        RETURN FALSE;
+    END IF;
+    
+    -- Get free plan ID
+    SELECT id INTO free_plan_id FROM public.subscription_plans WHERE slug = 'free';
+    
+    IF free_plan_id IS NULL THEN
+        RAISE EXCEPTION 'Free plan not found';
+    END IF;
+    
+    -- Create free subscription
+    INSERT INTO public.user_subscriptions (
+        user_id,
+        plan_id,
+        status,
+        cancel_at_period_end,
+        created_at,
+        updated_at
+    ) VALUES (
+        p_user_id,
+        free_plan_id,
+        'active',
+        false,
+        NOW(),
+        NOW()
+    );
+    
+    -- Initialize usage tracking
+    INSERT INTO public.usage_tracking (
+        user_id,
+        memory_count,
+        file_count,
+        last_reset_at,
+        created_at,
+        updated_at
+    ) VALUES (
+        p_user_id,
+        0,
+        0,
+        NOW(),
+        NOW(),
+        NOW()
+    )
+    ON CONFLICT (user_id) DO UPDATE SET
+        updated_at = NOW();
+    
+    RAISE NOTICE 'Successfully migrated user % to free plan', p_user_id;
+    RETURN TRUE;
+    
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING 'Failed to migrate user %: %', p_user_id, SQLERRM;
+        RETURN FALSE;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.reset_all_usage()
+RETURNS integer
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    updated_count INTEGER := 0;
+BEGIN
+    -- Reset usage counts for all users
+    UPDATE public.usage_tracking 
+    SET 
+        memory_count = 0,
+        file_count = 0,
+        last_reset_at = NOW(),
+        updated_at = NOW();
+    
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    
+    RAISE NOTICE 'Reset usage for % users', updated_count;
+    RETURN updated_count;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.reset_user_usage(uuid)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    INSERT INTO usage_tracking (user_id, memory_count, file_count, last_reset_at)
+    VALUES (p_user_id, 0, 0, NOW())
+    ON CONFLICT (user_id) DO UPDATE SET
+        memory_count = 0,
+        file_count = 0,
+        last_reset_at = NOW(),
+        updated_at = NOW();
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.resolve_error_log(character varying, character varying)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  updated_count INTEGER := 0;
+BEGIN
+  UPDATE public.error_logs 
+  SET 
+    resolved = true,
+    resolved_at = NOW(),
+    resolved_by = p_resolved_by,
+    updated_at = NOW()
+  WHERE id = p_error_id;
+  
+  GET DIAGNOSTICS updated_count = ROW_COUNT;
+  
+  IF updated_count > 0 THEN
+    RAISE NOTICE 'Marked error % as resolved by %', p_error_id, p_resolved_by;
+    RETURN TRUE;
+  ELSE
+    RAISE WARNING 'Error % not found or already resolved', p_error_id;
+    RETURN FALSE;
+  END IF;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.search_system_logs(text, character varying, character varying, character varying, uuid, integer)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  RETURN QUERY
+  SELECT 
+    sl.id,
+    sl.level,
+    sl.category,
+    sl.message,
+    sl.context,
+    sl.source,
+    sl.tags,
+    sl.created_at
+  FROM public.system_logs sl
+  WHERE 
+    (p_search_term IS NULL OR sl.message ILIKE '%' || p_search_term || '%')
+    AND (p_level IS NULL OR sl.level = p_level)
+    AND (p_category IS NULL OR sl.category = p_category)
+    AND (p_source IS NULL OR sl.source = p_source)
+    AND (p_user_id IS NULL OR sl.context->>'userId' = p_user_id::TEXT)
+  ORDER BY sl.created_at DESC
+  LIMIT p_limit;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec(sparsevec, integer, boolean)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_cmp(sparsevec, sparsevec)
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_cmp
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_eq(sparsevec, sparsevec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_eq
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_ge(sparsevec, sparsevec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_ge
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_gt(sparsevec, sparsevec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_gt
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_in(cstring, oid, integer)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_in
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_l2_squared_distance(sparsevec, sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_l2_squared_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_le(sparsevec, sparsevec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_le
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_lt(sparsevec, sparsevec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_lt
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_ne(sparsevec, sparsevec)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_ne
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_negative_inner_product(sparsevec, sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_negative_inner_product
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_out(sparsevec)
+RETURNS cstring
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_out
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_recv(internal, oid, integer)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_recv
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_send(sparsevec)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_send
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_to_halfvec(sparsevec, integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_to_vector(sparsevec, integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.sparsevec_typmod_in(cstring[])
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_typmod_in
+$function$;
+CREATE OR REPLACE FUNCTION public.store_memories_batch(uuid, jsonb)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  memory_item JSONB;
+  new_memory_id UUID;
+BEGIN
+  -- Loop through each memory in the batch
+  FOR memory_item IN SELECT * FROM jsonb_array_elements(memories_data)
+  LOOP
+    -- Insert each memory
+    INSERT INTO memories (user_id, content, embedding)
+    VALUES (
+      user_id_param,
+      memory_item->>'content',
+      CASE 
+        WHEN memory_item->>'embedding' IS NOT NULL 
+        THEN (memory_item->>'embedding')::vector
+        ELSE NULL
+      END
+    )
+    RETURNING memories.id INTO new_memory_id;
+    
+    -- Return the created memory
+    RETURN QUERY
+    SELECT 
+      m.id,
+      m.content,
+      m.created_at
+    FROM memories m
+    WHERE m.id = new_memory_id;
+  END LOOP;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.store_memory(uuid, text, vector)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  new_memory_id UUID;
+BEGIN
+  -- Insert the new memory
+  INSERT INTO memories (user_id, content, embedding)
+  VALUES (user_id_param, content_param, embedding_param)
+  RETURNING memories.id INTO new_memory_id;
+  
+  -- Return the created memory
+  RETURN QUERY
+  SELECT 
+    m.id,
+    m.content,
+    m.created_at
+  FROM memories m
+  WHERE m.id = new_memory_id;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.subvector(vector, integer, integer)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+subvector
+$function$;
+CREATE OR REPLACE FUNCTION public.subvector(halfvec, integer, integer)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_subvector
+$function$;
+CREATE OR REPLACE FUNCTION public.sum(vector)
+RETURNS vector
+LANGUAGE internal
+IMMUTABLE
+AS $function$
+aggregate_dummy
+$function$;
+CREATE OR REPLACE FUNCTION public.sum(halfvec)
+RETURNS halfvec
+LANGUAGE internal
+IMMUTABLE
+AS $function$
+aggregate_dummy
+$function$;
+CREATE OR REPLACE FUNCTION public.update_memory_embedding(uuid, vector)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  UPDATE memories 
+  SET embedding = embedding_param
+  WHERE id = memory_id_param;
+  
+  RETURN FOUND;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.update_user_notifications_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.upsert_user_subscription(uuid, uuid, character varying, character varying, timestamp with time zone, timestamp with time zone)
+RETURNS uuid
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_subscription_id UUID;
+BEGIN
+    INSERT INTO user_subscriptions (
+        user_id,
+        plan_id,
+        lemonsqueezy_subscription_id,
+        status,
+        current_period_start,
+        current_period_end
+    )
+    VALUES (
+        p_user_id,
+        p_plan_id,
+        p_lemonsqueezy_subscription_id,
+        p_status,
+        p_current_period_start,
+        p_current_period_end
+    )
+    ON CONFLICT (lemonsqueezy_subscription_id) DO UPDATE SET
+        plan_id = p_plan_id,
+        status = p_status,
+        current_period_start = p_current_period_start,
+        current_period_end = p_current_period_end,
+        updated_at = NOW()
+    RETURNING id INTO v_subscription_id;
+    
+    RETURN v_subscription_id;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.validate_subscription_periods()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    -- Ensure period start is before period end
+    IF NEW.current_period_start IS NOT NULL AND NEW.current_period_end IS NOT NULL THEN
+        IF NEW.current_period_start >= NEW.current_period_end THEN
+            RAISE EXCEPTION 'Subscription period start must be before period end';
+        END IF;
+    END IF;
+    
+    -- Ensure period end is not in the past for active subscriptions
+    IF NEW.status = 'active' AND NEW.current_period_end IS NOT NULL THEN
+        IF NEW.current_period_end < NOW() THEN
+            RAISE EXCEPTION 'Active subscription cannot have period end in the past';
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.vector(vector, integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_accum(double precision[], vector)
+RETURNS double precision[]
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_accum
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_add(vector, vector)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_add
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_avg(double precision[])
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_avg
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_cmp(vector, vector)
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_cmp
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_combine(double precision[], double precision[])
+RETURNS double precision[]
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_combine
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_concat(vector, vector)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_concat
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_dims(vector)
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_dims
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_dims(halfvec)
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_vector_dims
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_eq(vector, vector)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_eq
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_ge(vector, vector)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_ge
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_gt(vector, vector)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_gt
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_in(cstring, oid, integer)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_in
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_l2_squared_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_l2_squared_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_le(vector, vector)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_le
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_lt(vector, vector)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_lt
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_mul(vector, vector)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_mul
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_ne(vector, vector)
+RETURNS boolean
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_ne
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_negative_inner_product(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_negative_inner_product
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_norm(vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_norm
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_out(vector)
+RETURNS cstring
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_out
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_recv(internal, oid, integer)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_recv
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_send(vector)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_send
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_spherical_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_spherical_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_sub(vector, vector)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_sub
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_to_float4(vector, integer, boolean)
+RETURNS real[]
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_to_float4
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_to_halfvec(vector, integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_to_sparsevec(vector, integer, boolean)
+RETURNS sparsevec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_to_sparsevec
+$function$;
+CREATE OR REPLACE FUNCTION public.vector_typmod_in(cstring[])
+RETURNS integer
+LANGUAGE c
+IMMUTABLE
+AS $function$
+vector_typmod_in
+$function$;
+CREATE OR REPLACE FUNCTION realtime.apply_rls(jsonb, integer)
+RETURNS realtime.wal_rls
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+declare
+-- Regclass of the table e.g. public.notes
+entity_ regclass = (quote_ident(wal ->> 'schema') || '.' || quote_ident(wal ->> 'table'))::regclass;
+
+-- I, U, D, T: insert, update ...
+action realtime.action = (
+    case wal ->> 'action'
+        when 'I' then 'INSERT'
+        when 'U' then 'UPDATE'
+        when 'D' then 'DELETE'
+        else 'ERROR'
+    end
+);
+
+-- Is row level security enabled for the table
+is_rls_enabled bool = relrowsecurity from pg_class where oid = entity_;
+
+subscriptions realtime.subscription[] = array_agg(subs)
+    from
+        realtime.subscription subs
+    where
+        subs.entity = entity_;
+
+-- Subscription vars
+roles regrole[] = array_agg(distinct us.claims_role::text)
+    from
+        unnest(subscriptions) us;
+
+working_role regrole;
+claimed_role regrole;
+claims jsonb;
+
+subscription_id uuid;
+subscription_has_access bool;
+visible_to_subscription_ids uuid[] = '{}';
+
+-- structured info for wal's columns
+columns realtime.wal_column[];
+-- previous identity values for update/delete
+old_columns realtime.wal_column[];
+
+error_record_exceeds_max_size boolean = octet_length(wal::text) > max_record_bytes;
+
+-- Primary jsonb output for record
+output jsonb;
+
+begin
+perform set_config('role', null, true);
+
+columns =
+    array_agg(
+        (
+            x->>'name',
+            x->>'type',
+            x->>'typeoid',
+            realtime.cast(
+                (x->'value') #>> '{}',
+                coalesce(
+                    (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
+                    (x->>'type')::regtype
+                )
+            ),
+            (pks ->> 'name') is not null,
+            true
+        )::realtime.wal_column
+    )
+    from
+        jsonb_array_elements(wal -> 'columns') x
+        left join jsonb_array_elements(wal -> 'pk') pks
+            on (x ->> 'name') = (pks ->> 'name');
+
+old_columns =
+    array_agg(
+        (
+            x->>'name',
+            x->>'type',
+            x->>'typeoid',
+            realtime.cast(
+                (x->'value') #>> '{}',
+                coalesce(
+                    (x->>'typeoid')::regtype, -- null when wal2json version <= 2.4
+                    (x->>'type')::regtype
+                )
+            ),
+            (pks ->> 'name') is not null,
+            true
+        )::realtime.wal_column
+    )
+    from
+        jsonb_array_elements(wal -> 'identity') x
+        left join jsonb_array_elements(wal -> 'pk') pks
+            on (x ->> 'name') = (pks ->> 'name');
+
+for working_role in select * from unnest(roles) loop
+
+    -- Update `is_selectable` for columns and old_columns
+    columns =
+        array_agg(
+            (
+                c.name,
+                c.type_name,
+                c.type_oid,
+                c.value,
+                c.is_pkey,
+                pg_catalog.has_column_privilege(working_role, entity_, c.name, 'SELECT')
+            )::realtime.wal_column
+        )
+        from
+            unnest(columns) c;
+
+    old_columns =
+            array_agg(
+                (
+                    c.name,
+                    c.type_name,
+                    c.type_oid,
+                    c.value,
+                    c.is_pkey,
+                    pg_catalog.has_column_privilege(working_role, entity_, c.name, 'SELECT')
+                )::realtime.wal_column
+            )
+            from
+                unnest(old_columns) c;
+
+    if action <> 'DELETE' and count(1) = 0 from unnest(columns) c where c.is_pkey then
+        return next (
+            jsonb_build_object(
+                'schema', wal ->> 'schema',
+                'table', wal ->> 'table',
+                'type', action
+            ),
+            is_rls_enabled,
+            -- subscriptions is already filtered by entity
+            (select array_agg(s.subscription_id) from unnest(subscriptions) as s where claims_role = working_role),
+            array['Error 400: Bad Request, no primary key']
+        )::realtime.wal_rls;
+
+    -- The claims role does not have SELECT permission to the primary key of entity
+    elsif action <> 'DELETE' and sum(c.is_selectable::int) <> count(1) from unnest(columns) c where c.is_pkey then
+        return next (
+            jsonb_build_object(
+                'schema', wal ->> 'schema',
+                'table', wal ->> 'table',
+                'type', action
+            ),
+            is_rls_enabled,
+            (select array_agg(s.subscription_id) from unnest(subscriptions) as s where claims_role = working_role),
+            array['Error 401: Unauthorized']
+        )::realtime.wal_rls;
+
+    else
+        output = jsonb_build_object(
+            'schema', wal ->> 'schema',
+            'table', wal ->> 'table',
+            'type', action,
+            'commit_timestamp', to_char(
+                ((wal ->> 'timestamp')::timestamptz at time zone 'utc'),
+                'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'
+            ),
+            'columns', (
+                select
+                    jsonb_agg(
+                        jsonb_build_object(
+                            'name', pa.attname,
+                            'type', pt.typname
+                        )
+                        order by pa.attnum asc
+                    )
+                from
+                    pg_attribute pa
+                    join pg_type pt
+                        on pa.atttypid = pt.oid
+                where
+                    attrelid = entity_
+                    and attnum > 0
+                    and pg_catalog.has_column_privilege(working_role, entity_, pa.attname, 'SELECT')
+            )
+        )
+        -- Add "record" key for insert and update
+        || case
+            when action in ('INSERT', 'UPDATE') then
+                jsonb_build_object(
+                    'record',
+                    (
+                        select
+                            jsonb_object_agg(
+                                -- if unchanged toast, get column name and value from old record
+                                coalesce((c).name, (oc).name),
+                                case
+                                    when (c).name is null then (oc).value
+                                    else (c).value
+                                end
+                            )
+                        from
+                            unnest(columns) c
+                            full outer join unnest(old_columns) oc
+                                on (c).name = (oc).name
+                        where
+                            coalesce((c).is_selectable, (oc).is_selectable)
+                            and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                    )
+                )
+            else '{}'::jsonb
+        end
+        -- Add "old_record" key for update and delete
+        || case
+            when action = 'UPDATE' then
+                jsonb_build_object(
+                        'old_record',
+                        (
+                            select jsonb_object_agg((c).name, (c).value)
+                            from unnest(old_columns) c
+                            where
+                                (c).is_selectable
+                                and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                        )
+                    )
+            when action = 'DELETE' then
+                jsonb_build_object(
+                    'old_record',
+                    (
+                        select jsonb_object_agg((c).name, (c).value)
+                        from unnest(old_columns) c
+                        where
+                            (c).is_selectable
+                            and ( not error_record_exceeds_max_size or (octet_length((c).value::text) <= 64))
+                            and ( not is_rls_enabled or (c).is_pkey ) -- if RLS enabled, we can't secure deletes so filter to pkey
+                    )
+                )
+            else '{}'::jsonb
+        end;
+
+        -- Create the prepared statement
+        if is_rls_enabled and action <> 'DELETE' then
+            if (select 1 from pg_prepared_statements where name = 'walrus_rls_stmt' limit 1) > 0 then
+                deallocate walrus_rls_stmt;
+            end if;
+            execute realtime.build_prepared_statement_sql('walrus_rls_stmt', entity_, columns);
+        end if;
+
+        visible_to_subscription_ids = '{}';
+
+        for subscription_id, claims in (
+                select
+                    subs.subscription_id,
+                    subs.claims
+                from
+                    unnest(subscriptions) subs
+                where
+                    subs.entity = entity_
+                    and subs.claims_role = working_role
+                    and (
+                        realtime.is_visible_through_filters(columns, subs.filters)
+                        or (
+                          action = 'DELETE'
+                          and realtime.is_visible_through_filters(old_columns, subs.filters)
+                        )
+                    )
+        ) loop
+
+            if not is_rls_enabled or action = 'DELETE' then
+                visible_to_subscription_ids = visible_to_subscription_ids || subscription_id;
+            else
+                -- Check if RLS allows the role to see the record
+                perform
+                    -- Trim leading and trailing quotes from working_role because set_config
+                    -- doesn't recognize the role as valid if they are included
+                    set_config('role', trim(both '"' from working_role::text), true),
+                    set_config('request.jwt.claims', claims::text, true);
+
+                execute 'execute walrus_rls_stmt' into subscription_has_access;
+
+                if subscription_has_access then
+                    visible_to_subscription_ids = visible_to_subscription_ids || subscription_id;
+                end if;
+            end if;
+        end loop;
+
+        perform set_config('role', null, true);
+
+        return next (
+            output,
+            is_rls_enabled,
+            visible_to_subscription_ids,
+            case
+                when error_record_exceeds_max_size then array['Error 413: Payload Too Large']
+                else '{}'
+            end
+        )::realtime.wal_rls;
+
+    end if;
+end loop;
+
+perform set_config('role', null, true);
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION realtime.broadcast_changes(text, text, text, text, text, record, record, text)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    -- Declare a variable to hold the JSONB representation of the row
+    row_data jsonb := '{}'::jsonb;
+BEGIN
+    IF level = 'STATEMENT' THEN
+        RAISE EXCEPTION 'function can only be triggered for each row, not for each statement';
+    END IF;
+    -- Check the operation type and handle accordingly
+    IF operation = 'INSERT' OR operation = 'UPDATE' OR operation = 'DELETE' THEN
+        row_data := jsonb_build_object('old_record', OLD, 'record', NEW, 'operation', operation, 'table', table_name, 'schema', table_schema);
+        PERFORM realtime.send (row_data, event_name, topic_name);
+    ELSE
+        RAISE EXCEPTION 'Unexpected operation type: %', operation;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE EXCEPTION 'Failed to process the row: %', SQLERRM;
+END;
+
+
+$function$;
+CREATE OR REPLACE FUNCTION realtime.build_prepared_statement_sql(text, regclass, realtime.wal_column[])
+RETURNS text
+LANGUAGE sql
+VOLATILE
+AS $function$
+
+      /*
+      Builds a sql string that, if executed, creates a prepared statement to
+      tests retrive a row from *entity* by its primary key columns.
+      Example
+          select realtime.build_prepared_statement_sql('public.notes', '{"id"}'::text[], '{"bigint"}'::text[])
+      */
+          select
+      'prepare ' || prepared_statement_name || ' as
+          select
+              exists(
+                  select
+                      1
+                  from
+                      ' || entity || '
+                  where
+                      ' || string_agg(quote_ident(pkc.name) || '=' || quote_nullable(pkc.value #>> '{}') , ' and ') || '
+              )'
+          from
+              unnest(columns) pkc
+          where
+              pkc.is_pkey
+          group by
+              entity
+      
+$function$;
+CREATE OR REPLACE FUNCTION realtime.cast(text, regtype)
+RETURNS jsonb
+LANGUAGE plpgsql
+IMMUTABLE
+AS $function$
+
+    declare
+      res jsonb;
+    begin
+      execute format('select to_jsonb(%L::'|| type_::text || ')', val)  into res;
+      return res;
+    end
+    
+$function$;
+CREATE OR REPLACE FUNCTION realtime.check_equality_op(realtime.equality_op, regtype, text, text)
+RETURNS boolean
+LANGUAGE plpgsql
+IMMUTABLE
+AS $function$
+
+      /*
+      Casts *val_1* and *val_2* as type *type_* and check the *op* condition for truthiness
+      */
+      declare
+          op_symbol text = (
+              case
+                  when op = 'eq' then '='
+                  when op = 'neq' then '!='
+                  when op = 'lt' then '<'
+                  when op = 'lte' then '<='
+                  when op = 'gt' then '>'
+                  when op = 'gte' then '>='
+                  when op = 'in' then '= any'
+                  else 'UNKNOWN OP'
+              end
+          );
+          res boolean;
+      begin
+          execute format(
+              'select %L::'|| type_::text || ' ' || op_symbol
+              || ' ( %L::'
+              || (
+                  case
+                      when op = 'in' then type_::text || '[]'
+                      else type_::text end
+              )
+              || ')', val_1, val_2) into res;
+          return res;
+      end;
+      
+$function$;
+CREATE OR REPLACE FUNCTION realtime.is_visible_through_filters(realtime.wal_column[], realtime.user_defined_filter[])
+RETURNS boolean
+LANGUAGE sql
+IMMUTABLE
+AS $function$
+
+    /*
+    Should the record be visible (true) or filtered out (false) after *filters* are applied
+    */
+        select
+            -- Default to allowed when no filters present
+            $2 is null -- no filters. this should not happen because subscriptions has a default
+            or array_length($2, 1) is null -- array length of an empty array is null
+            or bool_and(
+                coalesce(
+                    realtime.check_equality_op(
+                        op:=f.op,
+                        type_:=coalesce(
+                            col.type_oid::regtype, -- null when wal2json version <= 2.4
+                            col.type_name::regtype
+                        ),
+                        -- cast jsonb to text
+                        val_1:=col.value #>> '{}',
+                        val_2:=f.value
+                    ),
+                    false -- if null, filter does not match
+                )
+            )
+        from
+            unnest(filters) f
+            join unnest(columns) col
+                on f.column_name = col.name;
+    
+$function$;
+CREATE OR REPLACE FUNCTION realtime.list_changes(name, name, integer, integer)
+RETURNS realtime.wal_rls
+LANGUAGE sql
+VOLATILE
+AS $function$
+
+      with pub as (
+        select
+          concat_ws(
+            ',',
+            case when bool_or(pubinsert) then 'insert' else null end,
+            case when bool_or(pubupdate) then 'update' else null end,
+            case when bool_or(pubdelete) then 'delete' else null end
+          ) as w2j_actions,
+          coalesce(
+            string_agg(
+              realtime.quote_wal2json(format('%I.%I', schemaname, tablename)::regclass),
+              ','
+            ) filter (where ppt.tablename is not null and ppt.tablename not like '% %'),
+            ''
+          ) w2j_add_tables
+        from
+          pg_publication pp
+          left join pg_publication_tables ppt
+            on pp.pubname = ppt.pubname
+        where
+          pp.pubname = publication
+        group by
+          pp.pubname
+        limit 1
+      ),
+      w2j as (
+        select
+          x.*, pub.w2j_add_tables
+        from
+          pub,
+          pg_logical_slot_get_changes(
+            slot_name, null, max_changes,
+            'include-pk', 'true',
+            'include-transaction', 'false',
+            'include-timestamp', 'true',
+            'include-type-oids', 'true',
+            'format-version', '2',
+            'actions', pub.w2j_actions,
+            'add-tables', pub.w2j_add_tables
+          ) x
+      )
+      select
+        xyz.wal,
+        xyz.is_rls_enabled,
+        xyz.subscription_ids,
+        xyz.errors
+      from
+        w2j,
+        realtime.apply_rls(
+          wal := w2j.data::jsonb,
+          max_record_bytes := max_record_bytes
+        ) xyz(wal, is_rls_enabled, subscription_ids, errors)
+      where
+        w2j.w2j_add_tables <> ''
+        and xyz.subscription_ids[1] is not null
+    
+$function$;
+CREATE OR REPLACE FUNCTION realtime.quote_wal2json(regclass)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $function$
+
+      select
+        (
+          select string_agg('' || ch,'')
+          from unnest(string_to_array(nsp.nspname::text, null)) with ordinality x(ch, idx)
+          where
+            not (x.idx = 1 and x.ch = '"')
+            and not (
+              x.idx = array_length(string_to_array(nsp.nspname::text, null), 1)
+              and x.ch = '"'
+            )
+        )
+        || '.'
+        || (
+          select string_agg('' || ch,'')
+          from unnest(string_to_array(pc.relname::text, null)) with ordinality x(ch, idx)
+          where
+            not (x.idx = 1 and x.ch = '"')
+            and not (
+              x.idx = array_length(string_to_array(nsp.nspname::text, null), 1)
+              and x.ch = '"'
+            )
+          )
+      from
+        pg_class pc
+        join pg_namespace nsp
+          on pc.relnamespace = nsp.oid
+      where
+        pc.oid = entity
+    
+$function$;
+CREATE OR REPLACE FUNCTION realtime.send(jsonb, text, text, boolean)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  BEGIN
+    -- Set the topic configuration
+    EXECUTE format('SET LOCAL realtime.topic TO %L', topic);
+
+    -- Attempt to insert the message
+    INSERT INTO realtime.messages (payload, event, topic, private, extension)
+    VALUES (payload, event, topic, private, 'broadcast');
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- Capture and notify the error
+      RAISE WARNING 'ErrorSendingBroadcastMessage: %', SQLERRM;
+  END;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION realtime.subscription_check_filters()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+    /*
+    Validates that the user defined filters for a subscription:
+    - refer to valid columns that the claimed role may access
+    - values are coercable to the correct column type
+    */
+    declare
+        col_names text[] = coalesce(
+                array_agg(c.column_name order by c.ordinal_position),
+                '{}'::text[]
+            )
+            from
+                information_schema.columns c
+            where
+                format('%I.%I', c.table_schema, c.table_name)::regclass = new.entity
+                and pg_catalog.has_column_privilege(
+                    (new.claims ->> 'role'),
+                    format('%I.%I', c.table_schema, c.table_name)::regclass,
+                    c.column_name,
+                    'SELECT'
+                );
+        filter realtime.user_defined_filter;
+        col_type regtype;
+
+        in_val jsonb;
+    begin
+        for filter in select * from unnest(new.filters) loop
+            -- Filtered column is valid
+            if not filter.column_name = any(col_names) then
+                raise exception 'invalid column for filter %', filter.column_name;
+            end if;
+
+            -- Type is sanitized and safe for string interpolation
+            col_type = (
+                select atttypid::regtype
+                from pg_catalog.pg_attribute
+                where attrelid = new.entity
+                      and attname = filter.column_name
+            );
+            if col_type is null then
+                raise exception 'failed to lookup type for column %', filter.column_name;
+            end if;
+
+            -- Set maximum number of entries for in filter
+            if filter.op = 'in'::realtime.equality_op then
+                in_val = realtime.cast(filter.value, (col_type::text || '[]')::regtype);
+                if coalesce(jsonb_array_length(in_val), 0) > 100 then
+                    raise exception 'too many values for `in` filter. Maximum 100';
+                end if;
+            else
+                -- raises an exception if value is not coercable to type
+                perform realtime.cast(filter.value, col_type);
+            end if;
+
+        end loop;
+
+        -- Apply consistent order to filters so the unique constraint on
+        -- (subscription_id, entity, filters) can't be tricked by a different filter order
+        new.filters = coalesce(
+            array_agg(f order by f.column_name, f.op, f.value),
+            '{}'
+        ) from unnest(new.filters) f;
+
+        return new;
+    end;
+    
+$function$;
+CREATE OR REPLACE FUNCTION realtime.to_regrole(text)
+RETURNS regrole
+LANGUAGE sql
+IMMUTABLE
+AS $function$
+ select role_name::regrole 
+$function$;
+CREATE OR REPLACE FUNCTION realtime.topic()
+RETURNS text
+LANGUAGE sql
+STABLE
+AS $function$
+
+select nullif(current_setting('realtime.topic', true), '')::text;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.add_prefixes(text, text)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    prefixes text[];
+BEGIN
+    prefixes := "storage"."get_prefixes"("_name");
+
+    IF array_length(prefixes, 1) > 0 THEN
+        INSERT INTO storage.prefixes (name, bucket_id)
+        SELECT UNNEST(prefixes) as name, "_bucket_id" ON CONFLICT DO NOTHING;
+    END IF;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.can_insert_object(text, text, uuid, jsonb)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  INSERT INTO "storage"."objects" ("bucket_id", "name", "owner", "metadata") VALUES (bucketid, name, owner, metadata);
+  -- hack to rollback the successful insert
+  RAISE sqlstate 'PT200' using
+  message = 'ROLLBACK',
+  detail = 'rollback successful insert';
+END
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.delete_prefix(text, text)
+RETURNS boolean
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    -- Check if we can delete the prefix
+    IF EXISTS(
+        SELECT FROM "storage"."prefixes"
+        WHERE "prefixes"."bucket_id" = "_bucket_id"
+          AND level = "storage"."get_level"("_name") + 1
+          AND "prefixes"."name" COLLATE "C" LIKE "_name" || '/%'
+        LIMIT 1
+    )
+    OR EXISTS(
+        SELECT FROM "storage"."objects"
+        WHERE "objects"."bucket_id" = "_bucket_id"
+          AND "storage"."get_level"("objects"."name") = "storage"."get_level"("_name") + 1
+          AND "objects"."name" COLLATE "C" LIKE "_name" || '/%'
+        LIMIT 1
+    ) THEN
+    -- There are sub-objects, skip deletion
+    RETURN false;
+    ELSE
+        DELETE FROM "storage"."prefixes"
+        WHERE "prefixes"."bucket_id" = "_bucket_id"
+          AND level = "storage"."get_level"("_name")
+          AND "prefixes"."name" = "_name";
+        RETURN true;
+    END IF;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.delete_prefix_hierarchy_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    prefix text;
+BEGIN
+    prefix := "storage"."get_prefix"(OLD."name");
+
+    IF coalesce(prefix, '') != '' THEN
+        PERFORM "storage"."delete_prefix"(OLD."bucket_id", prefix);
+    END IF;
+
+    RETURN OLD;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.enforce_bucket_name_length()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+begin
+    if length(new.name) > 100 then
+        raise exception 'bucket name "%" is too long (% characters). Max is 100.', new.name, length(new.name);
+    end if;
+    return new;
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.extension(text)
+RETURNS text
+LANGUAGE plpgsql
+IMMUTABLE
+AS $function$
+
+DECLARE
+    _parts text[];
+    _filename text;
+BEGIN
+    SELECT string_to_array(name, '/') INTO _parts;
+    SELECT _parts[array_length(_parts,1)] INTO _filename;
+    RETURN reverse(split_part(reverse(_filename), '.', 1));
+END
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.filename(text)
+RETURNS text
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+_parts text[];
+BEGIN
+	select string_to_array(name, '/') into _parts;
+	return _parts[array_length(_parts,1)];
+END
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.foldername(text)
+RETURNS text[]
+LANGUAGE plpgsql
+IMMUTABLE
+AS $function$
+
+DECLARE
+    _parts text[];
+BEGIN
+    -- Split on "/" to get path segments
+    SELECT string_to_array(name, '/') INTO _parts;
+    -- Return everything except the last segment
+    RETURN _parts[1 : array_length(_parts,1) - 1];
+END
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.get_level(text)
+RETURNS integer
+LANGUAGE sql
+IMMUTABLE
+AS $function$
+
+SELECT array_length(string_to_array("name", '/'), 1);
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.get_prefix(text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $function$
+
+SELECT
+    CASE WHEN strpos("name", '/') > 0 THEN
+             regexp_replace("name", '[\/]{1}[^\/]+\/?$', '')
+         ELSE
+             ''
+        END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.get_prefixes(text)
+RETURNS text[]
+LANGUAGE plpgsql
+IMMUTABLE
+AS $function$
+
+DECLARE
+    parts text[];
+    prefixes text[];
+    prefix text;
+BEGIN
+    -- Split the name into parts by '/'
+    parts := string_to_array("name", '/');
+    prefixes := '{}';
+
+    -- Construct the prefixes, stopping one level below the last part
+    FOR i IN 1..array_length(parts, 1) - 1 LOOP
+            prefix := array_to_string(parts[1:i], '/');
+            prefixes := array_append(prefixes, prefix);
+    END LOOP;
+
+    RETURN prefixes;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.get_size_by_bucket()
+RETURNS record
+LANGUAGE plpgsql
+STABLE
+AS $function$
+
+BEGIN
+    return query
+        select sum((metadata->>'size')::bigint) as size, obj.bucket_id
+        from "storage".objects as obj
+        group by obj.bucket_id;
+END
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.list_multipart_uploads_with_delimiter(text, text, text, integer, text, text)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    RETURN QUERY EXECUTE
+        'SELECT DISTINCT ON(key COLLATE "C") * from (
+            SELECT
+                CASE
+                    WHEN position($2 IN substring(key from length($1) + 1)) > 0 THEN
+                        substring(key from 1 for length($1) + position($2 IN substring(key from length($1) + 1)))
+                    ELSE
+                        key
+                END AS key, id, created_at
+            FROM
+                storage.s3_multipart_uploads
+            WHERE
+                bucket_id = $5 AND
+                key ILIKE $1 || ''%'' AND
+                CASE
+                    WHEN $4 != '''' AND $6 = '''' THEN
+                        CASE
+                            WHEN position($2 IN substring(key from length($1) + 1)) > 0 THEN
+                                substring(key from 1 for length($1) + position($2 IN substring(key from length($1) + 1))) COLLATE "C" > $4
+                            ELSE
+                                key COLLATE "C" > $4
+                            END
+                    ELSE
+                        true
+                END AND
+                CASE
+                    WHEN $6 != '''' THEN
+                        id COLLATE "C" > $6
+                    ELSE
+                        true
+                    END
+            ORDER BY
+                key COLLATE "C" ASC, created_at ASC) as e order by key COLLATE "C" LIMIT $3'
+        USING prefix_param, delimiter_param, max_keys, next_key_token, bucket_id, next_upload_token;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.list_objects_with_delimiter(text, text, text, integer, text, text)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    RETURN QUERY EXECUTE
+        'SELECT DISTINCT ON(name COLLATE "C") * from (
+            SELECT
+                CASE
+                    WHEN position($2 IN substring(name from length($1) + 1)) > 0 THEN
+                        substring(name from 1 for length($1) + position($2 IN substring(name from length($1) + 1)))
+                    ELSE
+                        name
+                END AS name, id, metadata, updated_at
+            FROM
+                storage.objects
+            WHERE
+                bucket_id = $5 AND
+                name ILIKE $1 || ''%'' AND
+                CASE
+                    WHEN $6 != '''' THEN
+                    name COLLATE "C" > $6
+                ELSE true END
+                AND CASE
+                    WHEN $4 != '''' THEN
+                        CASE
+                            WHEN position($2 IN substring(name from length($1) + 1)) > 0 THEN
+                                substring(name from 1 for length($1) + position($2 IN substring(name from length($1) + 1))) COLLATE "C" > $4
+                            ELSE
+                                name COLLATE "C" > $4
+                            END
+                    ELSE
+                        true
+                END
+            ORDER BY
+                name COLLATE "C" ASC) as e order by name COLLATE "C" LIMIT $3'
+        USING prefix_param, delimiter_param, max_keys, next_token, bucket_id, start_after;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.objects_insert_prefix_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    PERFORM "storage"."add_prefixes"(NEW."bucket_id", NEW."name");
+    NEW.level := "storage"."get_level"(NEW."name");
+
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.objects_update_prefix_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    old_prefixes TEXT[];
+BEGIN
+    -- Ensure this is an update operation and the name has changed
+    IF TG_OP = 'UPDATE' AND (NEW."name" <> OLD."name" OR NEW."bucket_id" <> OLD."bucket_id") THEN
+        -- Retrieve old prefixes
+        old_prefixes := "storage"."get_prefixes"(OLD."name");
+
+        -- Remove old prefixes that are only used by this object
+        WITH all_prefixes as (
+            SELECT unnest(old_prefixes) as prefix
+        ),
+        can_delete_prefixes as (
+             SELECT prefix
+             FROM all_prefixes
+             WHERE NOT EXISTS (
+                 SELECT 1 FROM "storage"."objects"
+                 WHERE "bucket_id" = OLD."bucket_id"
+                   AND "name" <> OLD."name"
+                   AND "name" LIKE (prefix || '%')
+             )
+         )
+        DELETE FROM "storage"."prefixes" WHERE name IN (SELECT prefix FROM can_delete_prefixes);
+
+        -- Add new prefixes
+        PERFORM "storage"."add_prefixes"(NEW."bucket_id", NEW."name");
+    END IF;
+    -- Set the new level
+    NEW."level" := "storage"."get_level"(NEW."name");
+
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.operation()
+RETURNS text
+LANGUAGE plpgsql
+STABLE
+AS $function$
+
+BEGIN
+    RETURN current_setting('storage.operation', true);
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.prefixes_insert_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    PERFORM "storage"."add_prefixes"(NEW."bucket_id", NEW."name");
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.search(text, text, integer, integer, integer, text, text, text)
+RETURNS record
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+declare
+    can_bypass_rls BOOLEAN;
+begin
+    SELECT rolbypassrls
+    INTO can_bypass_rls
+    FROM pg_roles
+    WHERE rolname = coalesce(nullif(current_setting('role', true), 'none'), current_user);
+
+    IF can_bypass_rls THEN
+        RETURN QUERY SELECT * FROM storage.search_v1_optimised(prefix, bucketname, limits, levels, offsets, search, sortcolumn, sortorder);
+    ELSE
+        RETURN QUERY SELECT * FROM storage.search_legacy_v1(prefix, bucketname, limits, levels, offsets, search, sortcolumn, sortorder);
+    END IF;
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.search_legacy_v1(text, text, integer, integer, integer, text, text, text)
+RETURNS record
+LANGUAGE plpgsql
+STABLE
+AS $function$
+
+declare
+    v_order_by text;
+    v_sort_order text;
+begin
+    case
+        when sortcolumn = 'name' then
+            v_order_by = 'name';
+        when sortcolumn = 'updated_at' then
+            v_order_by = 'updated_at';
+        when sortcolumn = 'created_at' then
+            v_order_by = 'created_at';
+        when sortcolumn = 'last_accessed_at' then
+            v_order_by = 'last_accessed_at';
+        else
+            v_order_by = 'name';
+        end case;
+
+    case
+        when sortorder = 'asc' then
+            v_sort_order = 'asc';
+        when sortorder = 'desc' then
+            v_sort_order = 'desc';
+        else
+            v_sort_order = 'asc';
+        end case;
+
+    v_order_by = v_order_by || ' ' || v_sort_order;
+
+    return query execute
+        'with folders as (
+           select path_tokens[$1] as folder
+           from storage.objects
+             where objects.name ilike $2 || $3 || ''%''
+               and bucket_id = $4
+               and array_length(objects.path_tokens, 1) <> $1
+           group by folder
+           order by folder ' || v_sort_order || '
+     )
+     (select folder as "name",
+            null as id,
+            null as updated_at,
+            null as created_at,
+            null as last_accessed_at,
+            null as metadata from folders)
+     union all
+     (select path_tokens[$1] as "name",
+            id,
+            updated_at,
+            created_at,
+            last_accessed_at,
+            metadata
+     from storage.objects
+     where objects.name ilike $2 || $3 || ''%''
+       and bucket_id = $4
+       and array_length(objects.path_tokens, 1) = $1
+     order by ' || v_order_by || ')
+     limit $5
+     offset $6' using levels, prefix, search, bucketname, limits, offsets;
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.search_v1_optimised(text, text, integer, integer, integer, text, text, text)
+RETURNS record
+LANGUAGE plpgsql
+STABLE
+AS $function$
+
+declare
+    v_order_by text;
+    v_sort_order text;
+begin
+    case
+        when sortcolumn = 'name' then
+            v_order_by = 'name';
+        when sortcolumn = 'updated_at' then
+            v_order_by = 'updated_at';
+        when sortcolumn = 'created_at' then
+            v_order_by = 'created_at';
+        when sortcolumn = 'last_accessed_at' then
+            v_order_by = 'last_accessed_at';
+        else
+            v_order_by = 'name';
+        end case;
+
+    case
+        when sortorder = 'asc' then
+            v_sort_order = 'asc';
+        when sortorder = 'desc' then
+            v_sort_order = 'desc';
+        else
+            v_sort_order = 'asc';
+        end case;
+
+    v_order_by = v_order_by || ' ' || v_sort_order;
+
+    return query execute
+        'with folders as (
+           select (string_to_array(name, ''/''))[level] as name
+           from storage.prefixes
+             where lower(prefixes.name) like lower($2 || $3) || ''%''
+               and bucket_id = $4
+               and level = $1
+           order by name ' || v_sort_order || '
+     )
+     (select name,
+            null as id,
+            null as updated_at,
+            null as created_at,
+            null as last_accessed_at,
+            null as metadata from folders)
+     union all
+     (select path_tokens[level] as "name",
+            id,
+            updated_at,
+            created_at,
+            last_accessed_at,
+            metadata
+     from storage.objects
+     where lower(objects.name) like lower($2 || $3) || ''%''
+       and bucket_id = $4
+       and level = $1
+     order by ' || v_order_by || ')
+     limit $5
+     offset $6' using levels, prefix, search, bucketname, limits, offsets;
+end;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.search_v2(text, text, integer, integer, text)
+RETURNS record
+LANGUAGE plpgsql
+STABLE
+AS $function$
+
+BEGIN
+    RETURN query EXECUTE
+        $sql$
+        SELECT * FROM (
+            (
+                SELECT
+                    split_part(name, '/', $4) AS key,
+                    name || '/' AS name,
+                    NULL::uuid AS id,
+                    NULL::timestamptz AS updated_at,
+                    NULL::timestamptz AS created_at,
+                    NULL::jsonb AS metadata
+                FROM storage.prefixes
+                WHERE name COLLATE "C" LIKE $1 || '%'
+                AND bucket_id = $2
+                AND level = $4
+                AND name COLLATE "C" > $5
+                ORDER BY prefixes.name COLLATE "C" LIMIT $3
+            )
+            UNION ALL
+            (SELECT split_part(name, '/', $4) AS key,
+                name,
+                id,
+                updated_at,
+                created_at,
+                metadata
+            FROM storage.objects
+            WHERE name COLLATE "C" LIKE $1 || '%'
+                AND bucket_id = $2
+                AND level = $4
+                AND name COLLATE "C" > $5
+            ORDER BY name COLLATE "C" LIMIT $3)
+        ) obj
+        ORDER BY name COLLATE "C" LIMIT $3;
+        $sql$
+        USING prefix, bucket_name, limits, levels, start_after;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.update_updated_at_column()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW; 
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION vault._crypto_aead_det_decrypt(bytea, bytea, bigint, bytea, bytea)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgsodium_crypto_aead_det_decrypt_by_id
+$function$;
+CREATE OR REPLACE FUNCTION vault._crypto_aead_det_encrypt(bytea, bytea, bigint, bytea, bytea)
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgsodium_crypto_aead_det_encrypt_by_id
+$function$;
+CREATE OR REPLACE FUNCTION vault._crypto_aead_det_noncegen()
+RETURNS bytea
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgsodium_crypto_aead_det_noncegen
+$function$;
+CREATE OR REPLACE FUNCTION vault.create_secret(text, text, text, uuid)
+RETURNS uuid
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  rec record;
+BEGIN
+  INSERT INTO vault.secrets (secret, name, description)
+  VALUES (
+    new_secret,
+    new_name,
+    new_description
+  )
+  RETURNING * INTO rec;
+  UPDATE vault.secrets s
+  SET secret = encode(vault._crypto_aead_det_encrypt(
+    message := convert_to(rec.secret, 'utf8'),
+    additional := convert_to(s.id::text, 'utf8'),
+    key_id := 0,
+    context := 'pgsodium'::bytea,
+    nonce := rec.nonce
+  ), 'base64')
+  WHERE id = rec.id;
+  RETURN rec.id;
+END
+
+$function$;
+CREATE OR REPLACE FUNCTION vault.update_secret(uuid, text, text, text, uuid)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  decrypted_secret text := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE id = secret_id);
+BEGIN
+  UPDATE vault.secrets s
+  SET
+    secret = CASE WHEN new_secret IS NULL THEN s.secret
+                  ELSE encode(vault._crypto_aead_det_encrypt(
+                    message := convert_to(new_secret, 'utf8'),
+                    additional := convert_to(s.id::text, 'utf8'),
+                    key_id := 0,
+                    context := 'pgsodium'::bytea,
+                    nonce := s.nonce
+                  ), 'base64') END,
+    name = coalesce(new_name, s.name),
+    description = coalesce(new_description, s.description),
+    updated_at = now()
+  WHERE s.id = secret_id;
+END
+
+$function$;
+
+-- Triggers
+CREATE TRIGGER create_user_encryption_profile AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION initialize_user_encryption_profile();
+CREATE TRIGGER ensure_single_active_subscription_trigger AFTER INSERT OR UPDATE ON public.user_subscriptions FOR EACH ROW WHEN (((new.status)::text = 'active'::text)) EXECUTE FUNCTION ensure_single_active_subscription();
+CREATE TRIGGER initialize_usage_tracking_trigger AFTER INSERT ON public.user_subscriptions FOR EACH ROW EXECUTE FUNCTION initialize_user_usage_tracking();
+CREATE TRIGGER log_webhook_processing_trigger BEFORE UPDATE ON public.webhook_events FOR EACH ROW EXECUTE FUNCTION log_webhook_processing();
+CREATE TRIGGER trigger_update_user_notifications_updated_at BEFORE UPDATE ON public.user_notifications FOR EACH ROW EXECUTE FUNCTION update_user_notifications_updated_at();
+CREATE TRIGGER update_encrypted_memories_updated_at BEFORE UPDATE ON public.encrypted_memories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_subscription_plans_updated_at BEFORE UPDATE ON public.subscription_plans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_usage_tracking_updated_at BEFORE UPDATE ON public.usage_tracking FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_user_encryption_profiles_updated_at BEFORE UPDATE ON public.user_encryption_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_user_subscriptions_updated_at BEFORE UPDATE ON public.user_subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER validate_subscription_periods_trigger BEFORE INSERT OR UPDATE ON public.user_subscriptions FOR EACH ROW EXECUTE FUNCTION validate_subscription_periods();
+CREATE TRIGGER tr_check_filters BEFORE INSERT OR UPDATE ON realtime.subscription FOR EACH ROW EXECUTE FUNCTION realtime.subscription_check_filters();
+CREATE TRIGGER enforce_bucket_name_length_trigger BEFORE INSERT OR UPDATE OF name ON storage.buckets FOR EACH ROW EXECUTE FUNCTION storage.enforce_bucket_name_length();
+CREATE TRIGGER objects_delete_delete_prefix AFTER DELETE ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger();
+CREATE TRIGGER objects_insert_create_prefix BEFORE INSERT ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.objects_insert_prefix_trigger();
+CREATE TRIGGER objects_update_create_prefix BEFORE UPDATE ON storage.objects FOR EACH ROW WHEN (((new.name <> old.name) OR (new.bucket_id <> old.bucket_id))) EXECUTE FUNCTION storage.objects_update_prefix_trigger();
+CREATE TRIGGER prefixes_create_hierarchy BEFORE INSERT ON storage.prefixes FOR EACH ROW WHEN ((pg_trigger_depth() < 1)) EXECUTE FUNCTION storage.prefixes_insert_trigger();
+CREATE TRIGGER prefixes_delete_hierarchy AFTER DELETE ON storage.prefixes FOR EACH ROW EXECUTE FUNCTION storage.delete_prefix_hierarchy_trigger();
+CREATE TRIGGER update_objects_updated_at BEFORE UPDATE ON storage.objects FOR EACH ROW EXECUTE FUNCTION storage.update_updated_at_column();
+
+-- End of DDL
