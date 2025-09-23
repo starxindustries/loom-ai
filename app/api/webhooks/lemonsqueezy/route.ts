@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { formatDate } from '@/lib/date-utils';
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { subscriptionService } from '@/lib/subscription-service';
 import { notificationService } from '@/lib/notification-service';
 import { errorHandlingService, ErrorType, ErrorSeverity, ErrorContext } from '@/lib/error-handling-service';
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Log webhook event to database
-    const supabase = await createClient();
+    const supabase = createServiceClient();
     const webhookRecord: Omit<WebhookEventRow, 'id' | 'created_at'> = {
       event_type: webhookEvent.meta.event_name,
       lemonsqueezy_event_id: webhookEvent.data.id,
@@ -422,7 +422,7 @@ async function handleSubscriptionCancelled(webhookEvent: LemonSqueezyWebhookEven
   const subscriptionId = webhookEvent.data.id;
   const attributes = webhookEvent.data.attributes;
   
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   
   // Get current subscription details before updating
   const { data: currentSubscription } = await supabase
@@ -469,7 +469,7 @@ async function handleSubscriptionResumed(webhookEvent: LemonSqueezyWebhookEvent)
   const subscriptionId = webhookEvent.data.id;
   const attributes = webhookEvent.data.attributes;
   
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   
   // Get current subscription details before updating
   const { data: currentSubscription } = await supabase
@@ -531,7 +531,7 @@ async function handleSubscriptionExpired(webhookEvent: LemonSqueezyWebhookEvent)
     { subscriptionId, userId }
   );
 
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   
   // Get current subscription details before updating
   const { data: currentSubscription, error: fetchError } = await supabase
@@ -629,7 +629,7 @@ async function handleSubscriptionPaused(webhookEvent: LemonSqueezyWebhookEvent):
   
   const subscriptionId = webhookEvent.data.id;
   
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { error } = await supabase
     .from('user_subscriptions')
     .update({

@@ -4,7 +4,7 @@
  * Requirements: 5.4, 4.4
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { errorHandlingService, ErrorType, ErrorSeverity } from './error-handling-service';
 import { loggingService, LogLevel, LogCategory, LogContext } from './logging-service';
 
@@ -140,7 +140,7 @@ export class ErrorMonitoringService {
     }
 
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       const { error } = await supabase
         .from('subscription_plans')
         .select('id')
@@ -181,7 +181,7 @@ export class ErrorMonitoringService {
     try {
       // Check if notification service can create a test notification
       // This is a simplified check
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       const { error } = await supabase
         .from('user_notifications')
         .select('id')
@@ -210,7 +210,7 @@ export class ErrorMonitoringService {
 
     try {
       // Check if webhook events are being processed
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       const { data, error } = await supabase
         .from('webhook_events')
         .select('id, created_at, processed')

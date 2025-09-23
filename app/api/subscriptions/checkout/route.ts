@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { planId, planSlug, successUrl, cancelUrl, customData } = body;
-
+    console.log(body)
     if (!planId && !planSlug) {
       return new Response(
         JSON.stringify({ error: "Plan ID or Plan Slug is required" }),
@@ -64,7 +64,9 @@ export async function POST(request: NextRequest) {
     return new Response(
       JSON.stringify({
         success: true,
-        checkoutSession
+        checkoutUrl: checkoutSession.url,
+        checkoutSessionId: checkoutSession.id,
+        expiresAt: checkoutSession.expiresAt
       }),
       {
         headers: { "Content-Type": "application/json" },

@@ -19,6 +19,32 @@ export class LemonSqueezyClient {
     }
   }
 
+  private getAppUrl(): string {
+    const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    try {
+      if (envUrl) {
+        const u = new URL(envUrl);
+        return u.origin;
+      }
+    } catch {}
+    return 'http://localhost:3000';
+  }
+
+  private ensureAbsoluteUrl(candidate?: string, fallbackPath: string = '/'): string {
+    if (candidate) {
+      try {
+        const u = new URL(candidate);
+        if (u.protocol === 'http:' || u.protocol === 'https:') {
+          return u.toString();
+        }
+      } catch {
+        // not an absolute URL, fall through to build from appUrl
+      }
+    }
+    const appUrl = this.getAppUrl();
+    return new URL(fallbackPath, appUrl).toString();
+  }
+
   /**
    * Create a checkout session
    */
@@ -26,6 +52,15 @@ export class LemonSqueezyClient {
     if (!plan.lemonsqueezyVariantId) {
       throw new Error('Plan missing LemonSqueezy variant ID');
     }
+
+    const redirectUrl = this.ensureAbsoluteUrl(
+      request.successUrl,
+      '/protected/billing?success=true'
+    );
+    const receiptLinkUrl = this.ensureAbsoluteUrl(
+      undefined,
+      '/protected/billing'
+    );
 
     const checkoutData = {
       data: {
@@ -56,9 +91,9 @@ export class LemonSqueezyClient {
           product_options: {
             name: plan.name,
             description: `${plan.name} subscription plan`,
-            redirect_url: request.successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/billing?success=true`,
+            redirect_url: redirectUrl,
             receipt_button_text: 'Go to Dashboard',
-            receipt_link_url: `${process.env.NEXT_PUBLIC_APP_URL}/billing`,
+            receipt_link_url: receiptLinkUrl,
             receipt_thank_you_note: 'Thank you for your subscription!'
           },
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
