@@ -4,7 +4,7 @@
  * Requirements: 5.4, 4.4
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { format } from 'date-fns';
 
 export enum ErrorType {
@@ -332,7 +332,7 @@ export class ErrorHandlingService {
     recentErrors: ErrorLog[];
   }> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       
       let query = supabase
         .from('error_logs')
@@ -386,7 +386,7 @@ export class ErrorHandlingService {
    */
   async resolveError(errorId: string, resolvedBy: string): Promise<void> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       const { error } = await supabase
         .from('error_logs')
         .update({

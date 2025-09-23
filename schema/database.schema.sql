@@ -1,6 +1,6 @@
 -- =====================================================
 -- Generated DDL for Database: postgres
--- Generated on: 2025-09-22 18:40:26.248397+00
+-- Generated on: 2025-09-23 17:23:33.844809+00
 -- =====================================================
 
 -- Tables
@@ -531,51 +531,43 @@ CREATE UNIQUE INDEX secrets_name_idx ON vault.secrets USING btree (name) WHERE (
 
 -- Row Level Security
 ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Users can delete their own encrypted memories ON public.encrypted_memories FOR DELETE TO public USING ((auth.uid() = user_id));
-ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can insert their own encrypted memories ON public.encrypted_memories FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Users can select their own encrypted memories ON public.encrypted_memories FOR SELECT TO public USING ((auth.uid() = user_id));
+CREATE POLICY Users can delete their own encrypted memories ON public.encrypted_memories FOR DELETE TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can update their own encrypted memories ON public.encrypted_memories FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
-ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Admins can update error logs ON public.error_logs FOR UPDATE TO public USING ((EXISTS ( SELECT 1
-   FROM auth.users
-  WHERE ((users.id = auth.uid()) AND ((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text)))));
-ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Admins can view error logs ON public.error_logs FOR SELECT TO public USING ((EXISTS ( SELECT 1
-   FROM auth.users
-  WHERE ((users.id = auth.uid()) AND ((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text)))));
+ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can select their own encrypted memories ON public.encrypted_memories FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY System can insert error logs ON public.error_logs FOR INSERT TO public WITH CHECK (true);
-ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
-CREATE POLICY subscription_plans_admin_all ON public.subscription_plans FOR ALL TO public USING ((EXISTS ( SELECT 1
-   FROM auth.users
-  WHERE ((users.id = auth.uid()) AND ((users.email)::text ~~ '%@admin.%'::text)))));
+ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY error_logs_admin_update ON public.error_logs FOR UPDATE TO authenticated USING ((auth.role() = 'admin'::text)) WITH CHECK ((auth.role() = 'admin'::text));
+ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY error_logs_admin_read ON public.error_logs FOR SELECT TO authenticated USING ((auth.role() = 'admin'::text));
 ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
 CREATE POLICY subscription_plans_public_read ON public.subscription_plans FOR SELECT TO public USING ((is_active = true));
+ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY subscription_plans_admin_all ON public.subscription_plans FOR ALL TO authenticated USING ((auth.role() = 'admin'::text)) WITH CHECK ((auth.role() = 'admin'::text));
 ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Admins can view logs ON public.system_logs FOR SELECT TO public USING ((EXISTS ( SELECT 1
-   FROM auth.users
-  WHERE ((users.id = auth.uid()) AND ((users.raw_user_meta_data ->> 'role'::text) = 'admin'::text)))));
+CREATE POLICY system_logs_admin_read ON public.system_logs FOR SELECT TO authenticated USING ((auth.role() = 'admin'::text));
 ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY System can insert logs ON public.system_logs FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
+CREATE POLICY usage_tracking_own_read ON public.usage_tracking FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
 CREATE POLICY usage_tracking_own_update ON public.usage_tracking FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
 CREATE POLICY usage_tracking_service_all ON public.usage_tracking FOR ALL TO public USING (((auth.jwt() ->> 'role'::text) = 'service_role'::text));
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
 CREATE POLICY usage_tracking_auto_insert ON public.usage_tracking FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
-ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
-CREATE POLICY usage_tracking_own_read ON public.usage_tracking FOR SELECT TO public USING ((auth.uid() = user_id));
-ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Users can read their own encryption profile ON public.user_encryption_profiles FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can delete their own encryption profile ON public.user_encryption_profiles FOR DELETE TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can update their own encryption profile ON public.user_encryption_profiles FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can create their own encryption profile ON public.user_encryption_profiles FOR INSERT TO public WITH CHECK (((auth.uid() = user_id) OR (auth.uid() IS NULL)));
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can read their own encryption profile ON public.user_encryption_profiles FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Service role can manage encryption profiles ON public.user_encryption_profiles FOR ALL TO public USING ((current_setting('role'::text) = 'service_role'::text)) WITH CHECK ((current_setting('role'::text) = 'service_role'::text));
 ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
@@ -587,11 +579,11 @@ CREATE POLICY Users can view own notifications ON public.user_notifications FOR 
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_subscriptions_own_update ON public.user_subscriptions FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY user_subscriptions_own_read ON public.user_subscriptions FOR SELECT TO public USING ((auth.uid() = user_id));
-ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_subscriptions_service_update ON public.user_subscriptions FOR UPDATE TO public USING ((((auth.jwt() ->> 'role'::text) = 'service_role'::text) OR (auth.uid() = user_id)));
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_subscriptions_service_insert ON public.user_subscriptions FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_subscriptions_own_read ON public.user_subscriptions FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.webhook_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY webhook_events_service_only ON public.webhook_events FOR ALL TO public USING (((auth.jwt() ->> 'role'::text) = 'service_role'::text));
 
@@ -886,14 +878,14 @@ BEGIN
 END;
 
 $function$;
-CREATE OR REPLACE FUNCTION extensions.hmac(text, text, text)
+CREATE OR REPLACE FUNCTION extensions.hmac(bytea, bytea, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pg_hmac
 $function$;
-CREATE OR REPLACE FUNCTION extensions.hmac(bytea, bytea, text)
+CREATE OR REPLACE FUNCTION extensions.hmac(text, text, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
@@ -942,14 +934,14 @@ IMMUTABLE
 AS $function$
 pgp_pub_decrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text)
 RETURNS text
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pgp_pub_decrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text)
 RETURNS text
 LANGUAGE c
 IMMUTABLE
@@ -963,14 +955,14 @@ IMMUTABLE
 AS $function$
 pgp_pub_decrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pgp_pub_decrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
@@ -1005,14 +997,14 @@ VOLATILE
 AS $function$
 pgp_pub_encrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text)
 RETURNS text
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pgp_sym_decrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text, text)
 RETURNS text
 LANGUAGE c
 IMMUTABLE
@@ -1047,14 +1039,14 @@ VOLATILE
 AS $function$
 pgp_sym_encrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text, text)
 RETURNS bytea
 LANGUAGE c
 VOLATILE
 AS $function$
 pgp_sym_encrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_encrypt_bytea(bytea, text)
 RETURNS bytea
 LANGUAGE c
 VOLATILE
@@ -1366,14 +1358,7 @@ begin
 end;
 
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_halfvec(double precision[], integer, boolean)
-RETURNS halfvec
-LANGUAGE c
-IMMUTABLE
-AS $function$
-array_to_halfvec
-$function$;
-CREATE OR REPLACE FUNCTION public.array_to_halfvec(real[], integer, boolean)
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(numeric[], integer, boolean)
 RETURNS halfvec
 LANGUAGE c
 IMMUTABLE
@@ -1387,7 +1372,14 @@ IMMUTABLE
 AS $function$
 array_to_halfvec
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_halfvec(numeric[], integer, boolean)
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(real[], integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(double precision[], integer, boolean)
 RETURNS halfvec
 LANGUAGE c
 IMMUTABLE
@@ -1422,13 +1414,6 @@ IMMUTABLE
 AS $function$
 array_to_sparsevec
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_vector(double precision[], integer, boolean)
-RETURNS vector
-LANGUAGE c
-IMMUTABLE
-AS $function$
-array_to_vector
-$function$;
 CREATE OR REPLACE FUNCTION public.array_to_vector(numeric[], integer, boolean)
 RETURNS vector
 LANGUAGE c
@@ -1450,6 +1435,32 @@ IMMUTABLE
 AS $function$
 array_to_vector
 $function$;
+CREATE OR REPLACE FUNCTION public.array_to_vector(double precision[], integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.assign_free_subscription_on_signup()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  -- Try to migrate the user to the free plan; warn but do not block user creation on failure
+  BEGIN
+    PERFORM public.migrate_user_to_free_plan(NEW.id);
+  EXCEPTION
+    WHEN OTHERS THEN
+      RAISE WARNING 'assign_free_subscription_on_signup failed for user %: %', NEW.id, SQLERRM;
+  END;
+
+  RETURN NEW;
+END;
+
+$function$;
 CREATE OR REPLACE FUNCTION public.avg(halfvec)
 RETURNS halfvec
 LANGUAGE internal
@@ -1464,19 +1475,19 @@ IMMUTABLE
 AS $function$
 aggregate_dummy
 $function$;
-CREATE OR REPLACE FUNCTION public.binary_quantize(vector)
-RETURNS bit
-LANGUAGE c
-IMMUTABLE
-AS $function$
-binary_quantize
-$function$;
 CREATE OR REPLACE FUNCTION public.binary_quantize(halfvec)
 RETURNS bit
 LANGUAGE c
 IMMUTABLE
 AS $function$
 halfvec_binary_quantize
+$function$;
+CREATE OR REPLACE FUNCTION public.binary_quantize(vector)
+RETURNS bit
+LANGUAGE c
+IMMUTABLE
+AS $function$
+binary_quantize
 $function$;
 CREATE OR REPLACE FUNCTION public.can_user_perform_action(uuid, character varying)
 RETURNS boolean
@@ -1618,13 +1629,6 @@ BEGIN
 END;
 
 $function$;
-CREATE OR REPLACE FUNCTION public.cosine_distance(vector, vector)
-RETURNS double precision
-LANGUAGE c
-IMMUTABLE
-AS $function$
-cosine_distance
-$function$;
 CREATE OR REPLACE FUNCTION public.cosine_distance(halfvec, halfvec)
 RETURNS double precision
 LANGUAGE c
@@ -1638,6 +1642,13 @@ LANGUAGE c
 IMMUTABLE
 AS $function$
 sparsevec_cosine_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.cosine_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+cosine_distance
 $function$;
 CREATE OR REPLACE FUNCTION public.ensure_single_active_subscription()
 RETURNS trigger
@@ -2170,13 +2181,6 @@ BEGIN
 END;
 
 $function$;
-CREATE OR REPLACE FUNCTION public.inner_product(sparsevec, sparsevec)
-RETURNS double precision
-LANGUAGE c
-IMMUTABLE
-AS $function$
-sparsevec_inner_product
-$function$;
 CREATE OR REPLACE FUNCTION public.inner_product(halfvec, halfvec)
 RETURNS double precision
 LANGUAGE c
@@ -2190,6 +2194,13 @@ LANGUAGE c
 IMMUTABLE
 AS $function$
 inner_product
+$function$;
+CREATE OR REPLACE FUNCTION public.inner_product(sparsevec, sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_inner_product
 $function$;
 CREATE OR REPLACE FUNCTION public.ivfflat_bit_support(internal)
 RETURNS internal
@@ -2219,19 +2230,19 @@ IMMUTABLE
 AS $function$
 jaccard_distance
 $function$;
-CREATE OR REPLACE FUNCTION public.l1_distance(vector, vector)
-RETURNS double precision
-LANGUAGE c
-IMMUTABLE
-AS $function$
-l1_distance
-$function$;
 CREATE OR REPLACE FUNCTION public.l1_distance(halfvec, halfvec)
 RETURNS double precision
 LANGUAGE c
 IMMUTABLE
 AS $function$
 halfvec_l1_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l1_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+l1_distance
 $function$;
 CREATE OR REPLACE FUNCTION public.l1_distance(sparsevec, sparsevec)
 RETURNS double precision
@@ -2247,13 +2258,6 @@ IMMUTABLE
 AS $function$
 l2_distance
 $function$;
-CREATE OR REPLACE FUNCTION public.l2_distance(halfvec, halfvec)
-RETURNS double precision
-LANGUAGE c
-IMMUTABLE
-AS $function$
-halfvec_l2_distance
-$function$;
 CREATE OR REPLACE FUNCTION public.l2_distance(sparsevec, sparsevec)
 RETURNS double precision
 LANGUAGE c
@@ -2261,12 +2265,12 @@ IMMUTABLE
 AS $function$
 sparsevec_l2_distance
 $function$;
-CREATE OR REPLACE FUNCTION public.l2_norm(halfvec)
+CREATE OR REPLACE FUNCTION public.l2_distance(halfvec, halfvec)
 RETURNS double precision
 LANGUAGE c
 IMMUTABLE
 AS $function$
-halfvec_l2_norm
+halfvec_l2_distance
 $function$;
 CREATE OR REPLACE FUNCTION public.l2_norm(sparsevec)
 RETURNS double precision
@@ -2275,12 +2279,19 @@ IMMUTABLE
 AS $function$
 sparsevec_l2_norm
 $function$;
-CREATE OR REPLACE FUNCTION public.l2_normalize(halfvec)
-RETURNS halfvec
+CREATE OR REPLACE FUNCTION public.l2_norm(halfvec)
+RETURNS double precision
 LANGUAGE c
 IMMUTABLE
 AS $function$
-halfvec_l2_normalize
+halfvec_l2_norm
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_normalize(vector)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+l2_normalize
 $function$;
 CREATE OR REPLACE FUNCTION public.l2_normalize(sparsevec)
 RETURNS sparsevec
@@ -2289,12 +2300,12 @@ IMMUTABLE
 AS $function$
 sparsevec_l2_normalize
 $function$;
-CREATE OR REPLACE FUNCTION public.l2_normalize(vector)
-RETURNS vector
+CREATE OR REPLACE FUNCTION public.l2_normalize(halfvec)
+RETURNS halfvec
 LANGUAGE c
 IMMUTABLE
 AS $function$
-l2_normalize
+halfvec_l2_normalize
 $function$;
 CREATE OR REPLACE FUNCTION public.log_webhook_processing()
 RETURNS trigger
@@ -2764,13 +2775,6 @@ BEGIN
 END;
 
 $function$;
-CREATE OR REPLACE FUNCTION public.subvector(vector, integer, integer)
-RETURNS vector
-LANGUAGE c
-IMMUTABLE
-AS $function$
-subvector
-$function$;
 CREATE OR REPLACE FUNCTION public.subvector(halfvec, integer, integer)
 RETURNS halfvec
 LANGUAGE c
@@ -2778,15 +2782,22 @@ IMMUTABLE
 AS $function$
 halfvec_subvector
 $function$;
-CREATE OR REPLACE FUNCTION public.sum(vector)
+CREATE OR REPLACE FUNCTION public.subvector(vector, integer, integer)
 RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+subvector
+$function$;
+CREATE OR REPLACE FUNCTION public.sum(halfvec)
+RETURNS halfvec
 LANGUAGE internal
 IMMUTABLE
 AS $function$
 aggregate_dummy
 $function$;
-CREATE OR REPLACE FUNCTION public.sum(halfvec)
-RETURNS halfvec
+CREATE OR REPLACE FUNCTION public.sum(vector)
+RETURNS vector
 LANGUAGE internal
 IMMUTABLE
 AS $function$
@@ -4412,6 +4423,7 @@ END
 $function$;
 
 -- Triggers
+CREATE TRIGGER assign_free_subscription_on_signup AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION assign_free_subscription_on_signup();
 CREATE TRIGGER create_user_encryption_profile AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION initialize_user_encryption_profile();
 CREATE TRIGGER ensure_single_active_subscription_trigger AFTER INSERT OR UPDATE ON public.user_subscriptions FOR EACH ROW WHEN (((new.status)::text = 'active'::text)) EXECUTE FUNCTION ensure_single_active_subscription();
 CREATE TRIGGER initialize_usage_tracking_trigger AFTER INSERT ON public.user_subscriptions FOR EACH ROW EXECUTE FUNCTION initialize_user_usage_tracking();

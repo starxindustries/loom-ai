@@ -4,7 +4,7 @@
  * Requirements: 5.4, 4.4
  */
 
-import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/service';
 import { format } from 'date-fns';
 
 export enum LogLevel {
@@ -241,7 +241,7 @@ export class LoggingService {
   async logSecurityEvent(
     eventType: 'suspicious_activity' | 'rate_limit_exceeded' | 'unauthorized_access' | 'data_breach',
     userId?: string,
-    message: string,
+    message?: string,
     context: LogContext = {}
   ): Promise<void> {
     const level = LogLevel.CRITICAL;
@@ -258,7 +258,7 @@ export class LoggingService {
    * Log system events
    */
   async logSystemEvent(
-    eventType: 'startup' | 'shutdown' | 'maintenance' | 'error' | 'performance' | 'notification_sent' | 'health_check_failed' | 'alert_triggered' | 'alert_rule_error' | 'alert_send_failed',
+    eventType: 'startup' | 'shutdown' | 'maintenance' | 'error' | 'performance' | 'notification_sent' | 'health_check_failed' | 'alert_triggered' | 'alert_rule_error' | 'alert_send_failed' | 'checkout_initiated',
     message: string,
     context: LogContext = {}
   ): Promise<void> {
@@ -289,7 +289,6 @@ export class LoggingService {
       message,
       context: {
         ...context,
-        timestamp: new Date(),
       },
       timestamp: new Date(),
       source,
@@ -315,7 +314,7 @@ export class LoggingService {
     if (this.logBuffer.length === 0) return;
 
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       const logsToStore = this.logBuffer.map(log => ({
         id: log.id,
         level: log.level,
@@ -359,7 +358,7 @@ export class LoggingService {
     } = {}
   ): Promise<LogEntry[]> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       let query = supabase
         .from('system_logs')
         .select('*')
