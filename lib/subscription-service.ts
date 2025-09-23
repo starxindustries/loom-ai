@@ -101,7 +101,9 @@ export class SubscriptionService implements SubscriptionServiceInterface {
    */
   async updateSubscriptionStatus(subscriptionId: string, status: SubscriptionStatus): Promise<void> {
     try {
-      const supabase = await createClient();
+      // Use service client inside webhook/background flows
+      const { createServiceClient } = await import('./supabase/service');
+      const supabase = createServiceClient();
       
       const { error } = await supabase
         .from('user_subscriptions')
@@ -125,7 +127,8 @@ export class SubscriptionService implements SubscriptionServiceInterface {
    */
   async getCurrentSubscription(userId: string): Promise<UserSubscription | null> {
     try {
-      const supabase = await createClient();
+      const { createServiceClient } = await import('./supabase/service');
+      const supabase = createServiceClient();
       
       const { data, error } = await supabase
         .from('user_subscriptions')
@@ -227,7 +230,8 @@ export class SubscriptionService implements SubscriptionServiceInterface {
    */
   async upsertSubscriptionFromWebhook(webhookData: any): Promise<void> {
     try {
-      const supabase = await createClient();
+      const { createServiceClient } = await import('./supabase/service');
+      const supabase = createServiceClient();
       const subscriptionData = webhookData.data;
       
       // Extract custom data to get user_id and plan_id
@@ -281,7 +285,8 @@ export class SubscriptionService implements SubscriptionServiceInterface {
    */
   async getAvailablePlans(): Promise<SubscriptionPlan[]> {
     try {
-      const supabase = await createClient();
+      const { createServiceClient } = await import('./supabase/service');
+      const supabase = createServiceClient();
       
       const { data, error } = await supabase
         .from('subscription_plans')

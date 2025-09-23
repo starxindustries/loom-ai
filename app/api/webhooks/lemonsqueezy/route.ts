@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     const eventName = webhookEvent.meta.event_name;
-    const subscriptionId = webhookEvent.data.attributes.identifier;
+    const subscriptionId = getSubscriptionIdFromEvent(webhookEvent);
     const userId = webhookEvent.meta.custom_data?.user_id;
 
     // Log webhook processing start
@@ -340,6 +340,24 @@ function verifyWebhookSignature(payload: string, signature: string, secret: stri
     console.error('Signature verification error:', error);
     return false;
   }
+}
+
+/**
+ * Extract LemonSqueezy subscription id from various webhook payloads
+ * - For subscription_* events, `data.id` is the subscription ID
+ * - For invoice/payment events, `data.attributes.subscription_id` holds the subscription ID
+ */
+function getSubscriptionIdFromEvent(event: LemonSqueezyWebhookEvent): string | undefined {
+  if (!event?.data) return undefined;
+  if (event.data.type && event.data.type.startsWith('subscriptions')) {
+    return event.data.id;
+  }
+  // invoices and others
+  const attrs = event.data.attributes as any;
+  if (attrs && (attrs.subscription_id || attrs.subscriptionId)) {
+    return String(attrs.subscription_id || attrs.subscriptionId);
+  }
+  return event.data.id;
 }
 
 /**
@@ -652,7 +670,7 @@ async function handleSubscriptionUnpaused(webhookEvent: LemonSqueezyWebhookEvent
   const subscriptionId = webhookEvent.data.id;
   const attributes = webhookEvent.data.attributes;
   
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
@@ -676,7 +694,7 @@ async function handleSubscriptionPaymentFailed(webhookEvent: LemonSqueezyWebhook
   const subscriptionId = webhookEvent.data.id;
   const attributes = webhookEvent.data.attributes;
   
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   
   // Get current subscription details before updating
   const { data: currentSubscription } = await supabase
@@ -716,10 +734,10 @@ async function handleSubscriptionPaymentFailed(webhookEvent: LemonSqueezyWebhook
 async function handleSubscriptionPaymentSuccess(webhookEvent: LemonSqueezyWebhookEvent): Promise<void> {
   console.log('Processing subscription_payment_success event');
   
-  const subscriptionId = webhookEvent.data.id;
+  const subscriptionId = getSubscriptionIdFromEvent(webhookEvent);
   const attributes = webhookEvent.data.attributes;
   
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   
   // Get current subscription details before updating
   const { data: currentSubscription } = await supabase
@@ -760,10 +778,10 @@ async function handleSubscriptionPaymentSuccess(webhookEvent: LemonSqueezyWebhoo
 async function handleSubscriptionPaymentRecovered(webhookEvent: LemonSqueezyWebhookEvent): Promise<void> {
   console.log('Processing subscription_payment_recovered event');
   
-  const subscriptionId = webhookEvent.data.id;
+  const subscriptionId = getSubscriptionIdFromEvent(webhookEvent);
   const attributes = webhookEvent.data.attributes;
   
-  const supabase = await createClient();
+  const supabase = createServiceClient();
   const { error } = await supabase
     .from('user_subscriptions')
     .update({
