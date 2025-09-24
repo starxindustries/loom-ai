@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   searchMemories,
   formatMemoriesForContext,
-  addMemory,
 } from "@/lib/memory";
 import { addMemoryWithLimits } from "@/lib/memory-with-usage-enforcement";
 
@@ -214,7 +213,6 @@ Be conversational, helpful, and natural in your responses.`,
     const encoder = new TextEncoder();
     let fullResponse = "";
     let currentToolCalls: any[] = [];
-    let toolCallsCompleted = false;
 
     const readableStream = new ReadableStream({
       async start(controller) {

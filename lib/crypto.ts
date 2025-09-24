@@ -727,7 +727,7 @@ export class PassphraseManager {
 export class SecureSession {
   private static instance: SecureSession | null = null;
   private kek: CryptoKey | null = null;
-  private sessionTimeout: NodeJS.Timeout | null = null;
+  private sessionTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly TIMEOUT_MINUTES = 30;
 
   private constructor() {}

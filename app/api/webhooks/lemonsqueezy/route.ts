@@ -4,8 +4,8 @@ import { formatDate } from '@/lib/date-utils';
 import { createServiceClient } from '@/lib/supabase/service';
 import { subscriptionService } from '@/lib/subscription-service';
 import { notificationService } from '@/lib/notification-service';
-import { errorHandlingService, ErrorType, ErrorSeverity, ErrorContext } from '@/lib/error-handling-service';
-import { loggingService, LogLevel, LogCategory, LogContext } from '@/lib/logging-service';
+import { errorHandlingService, ErrorType, ErrorSeverity } from '@/lib/error-handling-service';
+import { loggingService, LogContext } from '@/lib/logging-service';
 import { 
   LemonSqueezyWebhookEvent, 
   SubscriptionEventType,

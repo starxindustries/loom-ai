@@ -11,7 +11,7 @@ import { errorMonitoringService } from '@/lib/error-monitoring-service';
 /**
  * GET - Get error monitoring status and health checks
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Check if user is admin
     const supabase = await createClient();
@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
 
     // Check if user has admin role from user metadata
     const { data: userData } = await supabase.auth.getUser();
-    
-    if (userData.user?.user_metadata?.role !== 'admin') {
+    // console.log(userData);
+    if (userData.user?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }

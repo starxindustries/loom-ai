@@ -332,7 +332,7 @@ export class SubscriptionMiddleware {
       status: result.subscription.status,
       planName: result.plan.name,
       isActive: result.hasAccess,
-      expiresAt,
+      expiresAt: expiresAt.toISOString(),
       daysRemaining,
       needsAttention: ['past_due', 'expired', 'cancelled'].includes(result.subscription.status)
     };

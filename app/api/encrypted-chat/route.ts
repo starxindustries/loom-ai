@@ -9,24 +9,6 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface EncryptedMessage {
-  role: "user" | "assistant";
-  ciphertext: string;
-  wrapped_dek: string;
-  dek_salt: string;
-  dek_iv: string;
-  data_iv: string;
-  kdf_algorithm: string;
-  kdf_iterations: number;
-  encryption_algorithm: string;
-  timestamp: string;
-}
-
-interface DecryptedMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
 interface MemoryExtractionRequest {
   content: string;
   encrypted_data: {
@@ -71,7 +53,6 @@ export async function POST(request: NextRequest) {
 
     // Get user authentication
     let userId: string | null = null;
-    let userProfile: any = null;
 
     try {
       const supabase = await createClient();
@@ -97,8 +78,6 @@ export async function POST(request: NextRequest) {
         .select("*")
         .eq("user_id", user.id)
         .single();
-
-      userProfile = profile;
 
       if (!profile) {
         return new Response(
@@ -867,9 +846,6 @@ async function encryptMemoryForStorage(
         iv: dekIv,
       }
     );
-
-    // Convert salt from base64 for storage
-    const saltBuffer = Buffer.from(masterSalt, "base64");
 
     console.log(
       `[ENCRYPTED-CHAT-${requestId}] ✅ Memory encrypted server-side for storage`

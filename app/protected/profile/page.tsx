@@ -10,13 +10,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { motion, Variant, Variants } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { LogOut, Mail, Calendar, Shield, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { ProfileButton } from "@/components/common/profile-button";
 import { ThemeSwitcher } from "@/components/layout/theme-switcher";
+import Image from "next/image";
 
 export default function ProfilePage() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -167,7 +168,9 @@ export default function ProfilePage() {
               <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
                   {profileImageUrl ? (
-                    <img
+                    <Image
+                      width={96}
+                      height={96}
                       src={profileImageUrl}
                       alt="Profile"
                       className="h-24 w-24 rounded-full object-cover border-4 border-background shadow-lg"

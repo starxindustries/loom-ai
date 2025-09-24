@@ -4,31 +4,33 @@
  * Requirements: 5.4, 4.4
  */
 
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  Info, 
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Info,
   RefreshCw,
-  Search,
-  Filter,
-  Calendar,
   Activity,
   Shield,
-  Database,
-  Zap
-} from 'lucide-react';
-import { formatDate, getRelativeTime } from '@/lib/date-utils';
+} from "lucide-react";
+import { getRelativeTime } from "@/lib/date-utils";
 
 interface ErrorStatistics {
   totalErrors: number;
@@ -90,8 +92,10 @@ export function ErrorMonitoringDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Last 7 days
-    endDate: new Date().toISOString().split('T')[0],
+    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0], // Last 7 days
+    endDate: new Date().toISOString().split("T")[0],
   });
 
   useEffect(() => {
@@ -110,13 +114,13 @@ export function ErrorMonitoringDashboard() {
 
       const response = await fetch(`/api/admin/error-statistics?${params}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch error statistics');
+        throw new Error("Failed to fetch error statistics");
       }
 
       const result = await response.json();
       setData(result.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
@@ -130,49 +134,49 @@ export function ErrorMonitoringDashboard() {
 
   const handleResolveError = async (errorId: string) => {
     try {
-      const response = await fetch('/api/admin/error-statistics', {
-        method: 'POST',
+      const response = await fetch("/api/admin/error-statistics", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ errorId }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to resolve error');
+        throw new Error("Failed to resolve error");
       }
 
       // Refresh data
       await fetchData();
     } catch (err) {
-      console.error('Failed to resolve error:', err);
+      console.error("Failed to resolve error:", err);
     }
   };
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'critical':
-        return 'destructive';
-      case 'high':
-        return 'destructive';
-      case 'medium':
-        return 'default';
-      case 'low':
-        return 'secondary';
+      case "critical":
+        return "destructive";
+      case "high":
+        return "destructive";
+      case "medium":
+        return "default";
+      case "low":
+        return "secondary";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
-      case 'critical':
+      case "critical":
         return <XCircle className="h-4 w-4" />;
-      case 'high':
+      case "high":
         return <AlertTriangle className="h-4 w-4" />;
-      case 'medium':
+      case "medium":
         return <Info className="h-4 w-4" />;
-      case 'low':
+      case "low":
         return <CheckCircle className="h-4 w-4" />;
       default:
         return <Info className="h-4 w-4" />;
@@ -181,17 +185,17 @@ export function ErrorMonitoringDashboard() {
 
   const getLogLevelColor = (level: string) => {
     switch (level) {
-      case 'critical':
-      case 'error':
-        return 'destructive';
-      case 'warn':
-        return 'default';
-      case 'info':
-        return 'secondary';
-      case 'debug':
-        return 'outline';
+      case "critical":
+      case "error":
+        return "destructive";
+      case "warn":
+        return "default";
+      case "info":
+        return "secondary";
+      case "debug":
+        return "outline";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
@@ -257,18 +261,24 @@ export function ErrorMonitoringDashboard() {
           <input
             type="date"
             value={dateRange.startDate}
-            onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+            onChange={(e) =>
+              setDateRange((prev) => ({ ...prev, startDate: e.target.value }))
+            }
             className="px-3 py-2 border rounded-md"
           />
           <span>to</span>
           <input
             type="date"
             value={dateRange.endDate}
-            onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+            onChange={(e) =>
+              setDateRange((prev) => ({ ...prev, endDate: e.target.value }))
+            }
             className="px-3 py-2 border rounded-md"
           />
           <Button onClick={handleRefresh} disabled={refreshing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -283,19 +293,21 @@ export function ErrorMonitoringDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.summary.totalErrors}</div>
-            <p className="text-xs text-muted-foreground">
-              Last 7 days
-            </p>
+            <p className="text-xs text-muted-foreground">Last 7 days</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Critical Errors</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Critical Errors
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">{data.summary.criticalErrors}</div>
+            <div className="text-2xl font-bold text-destructive">
+              {data.summary.criticalErrors}
+            </div>
             <p className="text-xs text-muted-foreground">
               Requires immediate attention
             </p>
@@ -308,7 +320,9 @@ export function ErrorMonitoringDashboard() {
             <Shield className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{data.summary.highErrors}</div>
+            <div className="text-2xl font-bold text-orange-500">
+              {data.summary.highErrors}
+            </div>
             <p className="text-xs text-muted-foreground">
               Should be addressed soon
             </p>
@@ -364,13 +378,25 @@ export function ErrorMonitoringDashboard() {
                           <span className="ml-1">{error.severity}</span>
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">{error.type}</TableCell>
-                      <TableCell className="max-w-md truncate">{error.userMessage}</TableCell>
-                      <TableCell>{error.context.userId ? error.context.userId.substring(0, 8) + '...' : 'N/A'}</TableCell>
-                      <TableCell>{getRelativeTime(new Date(error.createdAt))}</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {error.type}
+                      </TableCell>
+                      <TableCell className="max-w-md truncate">
+                        {error.userMessage}
+                      </TableCell>
                       <TableCell>
-                        <Badge variant={error.resolved ? 'secondary' : 'destructive'}>
-                          {error.resolved ? 'Resolved' : 'Open'}
+                        {error.context.userId
+                          ? error.context.userId.substring(0, 8) + "..."
+                          : "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {getRelativeTime(new Date(error.createdAt))}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={error.resolved ? "secondary" : "destructive"}
+                        >
+                          {error.resolved ? "Resolved" : "Open"}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -417,9 +443,15 @@ export function ErrorMonitoringDashboard() {
                         </Badge>
                       </TableCell>
                       <TableCell>{log.category}</TableCell>
-                      <TableCell className="font-mono text-sm">{log.source}</TableCell>
-                      <TableCell className="max-w-md truncate">{log.message}</TableCell>
-                      <TableCell>{getRelativeTime(new Date(log.timestamp))}</TableCell>
+                      <TableCell className="font-mono text-sm">
+                        {log.source}
+                      </TableCell>
+                      <TableCell className="max-w-md truncate">
+                        {log.message}
+                      </TableCell>
+                      <TableCell>
+                        {getRelativeTime(new Date(log.timestamp))}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -436,15 +468,22 @@ export function ErrorMonitoringDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(data.errors.errorsBySeverity).map(([severity, count]) => (
-                    <div key={severity} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {getSeverityIcon(severity)}
-                        <span className="capitalize">{severity}</span>
+                  {Object.entries(data.errors.errorsBySeverity).map(
+                    ([severity, count]) => (
+                      <div
+                        key={severity}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          {getSeverityIcon(severity)}
+                          <span className="capitalize">{severity}</span>
+                        </div>
+                        <Badge variant={getSeverityColor(severity)}>
+                          {count}
+                        </Badge>
                       </div>
-                      <Badge variant={getSeverityColor(severity)}>{count}</Badge>
-                    </div>
-                  ))}
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -455,12 +494,17 @@ export function ErrorMonitoringDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(data.logs.logsByLevel).map(([level, count]) => (
-                    <div key={level} className="flex items-center justify-between">
-                      <span className="capitalize">{level}</span>
-                      <Badge variant={getLogLevelColor(level)}>{count}</Badge>
-                    </div>
-                  ))}
+                  {Object.entries(data.logs.logsByLevel).map(
+                    ([level, count]) => (
+                      <div
+                        key={level}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="capitalize">{level}</span>
+                        <Badge variant={getLogLevelColor(level)}>{count}</Badge>
+                      </div>
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -471,12 +515,17 @@ export function ErrorMonitoringDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(data.errors.errorsByType).map(([type, count]) => (
-                    <div key={type} className="flex items-center justify-between">
-                      <span className="font-mono text-sm">{type}</span>
-                      <Badge variant="outline">{count}</Badge>
-                    </div>
-                  ))}
+                  {Object.entries(data.errors.errorsByType).map(
+                    ([type, count]) => (
+                      <div
+                        key={type}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="font-mono text-sm">{type}</span>
+                        <Badge variant="outline">{count}</Badge>
+                      </div>
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -487,12 +536,17 @@ export function ErrorMonitoringDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {Object.entries(data.logs.logsByCategory).map(([category, count]) => (
-                    <div key={category} className="flex items-center justify-between">
-                      <span className="capitalize">{category}</span>
-                      <Badge variant="outline">{count}</Badge>
-                    </div>
-                  ))}
+                  {Object.entries(data.logs.logsByCategory).map(
+                    ([category, count]) => (
+                      <div
+                        key={category}
+                        className="flex items-center justify-between"
+                      >
+                        <span className="capitalize">{category}</span>
+                        <Badge variant="outline">{count}</Badge>
+                      </div>
+                    )
+                  )}
                 </div>
               </CardContent>
             </Card>

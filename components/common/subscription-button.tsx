@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Zap } from 'lucide-react';
 import { toast } from 'sonner';
@@ -20,7 +20,6 @@ interface SubscriptionButtonProps {
 
 export function SubscriptionButton({
   planSlug,
-  planName,
   price,
   variant = 'default',
   size = 'default',

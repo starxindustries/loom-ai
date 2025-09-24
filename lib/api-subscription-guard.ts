@@ -57,7 +57,7 @@ export function requirePlan(planSlug: string) {
  * Decorator for API routes that allow grace period for cancelled subscriptions
  */
 export function allowGracePeriod(
-  handler: (request: NextRequest, userId: string, subscription: any) => Promise<NextResponse>
+  handler: (request: NextRequest, userId: string) => Promise<NextResponse>
 ) {
   return withSubscriptionGuard(handler, { 
     requireActiveSubscription: true, 

@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { usageLimitMiddleware } from "@/lib/usage-limit-middleware";
-import { usageTrackingService } from "@/lib/usage-tracking-service";
 
 // GET - List user's files
 export async function GET(request: NextRequest) {

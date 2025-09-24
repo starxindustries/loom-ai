@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has admin role from user metadata
-    if (user.user_metadata?.role !== 'admin') {
+    if (user?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden - Admin access required' },
         { status: 403 }

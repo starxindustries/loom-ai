@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface GoogleAuthButtonProps {
   mode: "login" | "signup";
@@ -12,7 +11,6 @@ interface GoogleAuthButtonProps {
 
 export function GoogleAuthButton({ mode, className }: GoogleAuthButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleGoogleAuth = async () => {
     const supabase = createClient();

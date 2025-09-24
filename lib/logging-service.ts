@@ -61,7 +61,7 @@ export class LoggingService {
   private logBuffer: LogEntry[] = [];
   private bufferSize = 100;
   private flushInterval = 30000; // 30 seconds
-  private flushTimer?: NodeJS.Timeout;
+  private flushTimer?: ReturnType<typeof setInterval>;
 
   public static getInstance(): LoggingService {
     if (!LoggingService.instance) {

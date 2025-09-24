@@ -441,7 +441,7 @@ export class ErrorHandlingService {
     errorLog: Omit<ErrorLog, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<void> {
     try {
-      const supabase = await createClient();
+      const supabase = createServiceClient();
       const { error } = await supabase
         .from('error_logs')
         .insert({

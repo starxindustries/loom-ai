@@ -15,12 +15,6 @@ export function UsageStatsCard({ usage }: UsageStatsCardProps) {
     return Math.min((current / limit) * 100, 100);
   };
 
-  const getUsageColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 75) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
   const formatUsage = (current: number, limit: number) => {
     if (limit === -1) {
       return `${current.toLocaleString()} / Unlimited`;
@@ -100,7 +94,7 @@ export function UsageStatsCard({ usage }: UsageStatsCardProps) {
         {(memoryPercentage >= 90 || filePercentage >= 90) && (
           <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
             <p className="text-sm text-yellow-800">
-              You're approaching your usage limits. Consider upgrading your plan to avoid interruptions.
+              You&apos;re approaching your usage limits. Consider upgrading your plan to avoid interruptions.
             </p>
           </div>
         )}

@@ -19,13 +19,7 @@ import {
   CheckCircle, 
   XCircle, 
   RefreshCw,
-  Shield,
-  Database,
-  Zap,
-  Users,
-  CreditCard,
   Bell,
-  Settings
 } from 'lucide-react';
 import { ErrorMonitoringDashboard } from '@/components/admin/error-monitoring-dashboard';
 
@@ -37,7 +31,7 @@ interface HealthStatus {
   error?: string;
 }
 
-interface Alert {
+interface AlertInterface {
   id: string;
   ruleId: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -52,7 +46,7 @@ interface Alert {
 interface AdminDashboardData {
   overallHealth: 'healthy' | 'degraded' | 'unhealthy';
   healthStatus: HealthStatus[];
-  activeAlerts: Alert[];
+  activeAlerts: AlertInterface[];
   summary: {
     totalServices: number;
     healthyServices: number;
@@ -137,9 +131,9 @@ export default function AdminDashboard() {
   const getHealthColor = (status: string) => {
     switch (status) {
       case 'healthy':
-        return 'success';
+        return 'default';
       case 'degraded':
-        return 'warning';
+        return 'default';
       case 'unhealthy':
         return 'destructive';
       default:
