@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
   
   // Define routes that require active subscription
   const premiumRoutes = [
-    '/protected/chat',
+    '/protected',
     '/protected/memories',
     '/protected/example'
   ];

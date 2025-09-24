@@ -2,39 +2,44 @@ import {
   LemonSqueezyCheckoutSession,
   LemonSqueezySubscription,
   CheckoutSessionRequest,
-  SubscriptionPlan
-} from '../types/subscription';
+  SubscriptionPlan,
+} from "../types/subscription";
 
 export class LemonSqueezyClient {
   private apiKey: string;
   private storeId: string;
-  private baseUrl = 'https://api.lemonsqueezy.com/v1';
+  private baseUrl = "https://api.lemonsqueezy.com/v1";
 
   constructor(apiKey?: string, storeId?: string) {
-    this.apiKey = apiKey || process.env.LEMONSQUEEZY_API_KEY || '';
-    this.storeId = storeId || process.env.LEMONSQUEEZY_STORE_ID || '';
-    
+    this.apiKey = apiKey || process.env.LEMONSQUEEZY_API_KEY || "";
+    this.storeId = storeId || process.env.LEMONSQUEEZY_STORE_ID || "";
+
     if (!this.apiKey || !this.storeId) {
-      throw new Error('LemonSqueezy API key and store ID are required');
+      throw new Error("LemonSqueezy API key and store ID are required");
     }
   }
 
   private getAppUrl(): string {
-    const envUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+    const envUrl = process.env.NEXT_PUBLIC_APP_URL || "";
     try {
       if (envUrl) {
         const u = new URL(envUrl);
         return u.origin;
       }
-    } catch {}
-    return 'http://localhost:3000';
+    } catch (error) {
+      console.log(error);
+    }
+    return "http://localhost:3000";
   }
 
-  private ensureAbsoluteUrl(candidate?: string, fallbackPath: string = '/'): string {
+  private ensureAbsoluteUrl(
+    candidate?: string,
+    fallbackPath: string = "/"
+  ): string {
     if (candidate) {
       try {
         const u = new URL(candidate);
-        if (u.protocol === 'http:' || u.protocol === 'https:') {
+        if (u.protocol === "http:" || u.protocol === "https:") {
           return u.toString();
         }
       } catch {
@@ -48,23 +53,26 @@ export class LemonSqueezyClient {
   /**
    * Create a checkout session
    */
-  async createCheckout(plan: SubscriptionPlan, request: CheckoutSessionRequest): Promise<LemonSqueezyCheckoutSession> {
+  async createCheckout(
+    plan: SubscriptionPlan,
+    request: CheckoutSessionRequest
+  ): Promise<LemonSqueezyCheckoutSession> {
     if (!plan.lemonsqueezyVariantId) {
-      throw new Error('Plan missing LemonSqueezy variant ID');
+      throw new Error("Plan missing LemonSqueezy variant ID");
     }
 
     const redirectUrl = this.ensureAbsoluteUrl(
       request.successUrl,
-      '/protected/billing?success=true'
+      "/protected/billing?success=true"
     );
     const receiptLinkUrl = this.ensureAbsoluteUrl(
       undefined,
-      '/protected/billing'
+      "/protected/billing"
     );
 
     const checkoutData = {
       data: {
-        type: 'checkouts',
+        type: "checkouts",
         attributes: {
           checkout_options: {
             embed: false,
@@ -73,75 +81,87 @@ export class LemonSqueezyClient {
             desc: true,
             discount: true,
             dark: false,
-            subscription_preview: true
+            subscription_preview: true,
           },
           checkout_data: {
             custom: {
               user_id: request.userId,
               plan_id: request.planId,
-              ...request.customData
+              ...request.customData,
             },
             variant_quantities: [
               {
                 variant_id: parseInt(plan.lemonsqueezyVariantId),
-                quantity: 1
-              }
-            ]
+                quantity: 1,
+              },
+            ],
           },
           product_options: {
             name: plan.name,
             description: `${plan.name} subscription plan`,
             redirect_url: redirectUrl,
-            receipt_button_text: 'Go to Dashboard',
+            receipt_button_text: "Go to Dashboard",
             receipt_link_url: receiptLinkUrl,
-            receipt_thank_you_note: 'Thank you for your subscription!'
+            receipt_thank_you_note: "Thank you for your subscription!",
           },
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
         },
         relationships: {
           store: {
             data: {
-              type: 'stores',
-              id: this.storeId
-            }
+              type: "stores",
+              id: this.storeId,
+            },
           },
           variant: {
             data: {
-              type: 'variants',
-              id: plan.lemonsqueezyVariantId
-            }
-          }
-        }
-      }
+              type: "variants",
+              id: plan.lemonsqueezyVariantId,
+            },
+          },
+        },
+      },
     };
 
-    const response = await this.makeRequest('POST', '/checkouts', checkoutData);
+    const response = await this.makeRequest("POST", "/checkouts", checkoutData);
     return response as LemonSqueezyCheckoutSession;
   }
 
   /**
    * Get subscription details
    */
-  async getSubscription(subscriptionId: string): Promise<LemonSqueezySubscription> {
-    const response = await this.makeRequest('GET', `/subscriptions/${subscriptionId}`);
+  async getSubscription(
+    subscriptionId: string
+  ): Promise<LemonSqueezySubscription> {
+    const response = await this.makeRequest(
+      "GET",
+      `/subscriptions/${subscriptionId}`
+    );
     return response as LemonSqueezySubscription;
   }
 
   /**
    * Update subscription
    */
-  async updateSubscription(subscriptionId: string, variantId: string): Promise<LemonSqueezySubscription> {
+  async updateSubscription(
+    subscriptionId: string,
+    variantId: string
+  ): Promise<LemonSqueezySubscription> {
     const updateData = {
       data: {
-        type: 'subscriptions',
+        type: "subscriptions",
         id: subscriptionId,
         attributes: {
-          variant_id: parseInt(variantId)
-        }
-      }
+          variant_id: parseInt(variantId),
+        },
+      },
     };
 
-    const response = await this.makeRequest('PATCH', `/subscriptions/${subscriptionId}`, updateData);
+    const response = await this.makeRequest(
+      "PATCH",
+      `/subscriptions/${subscriptionId}`,
+      updateData
+    );
     return response as LemonSqueezySubscription;
   }
 
@@ -149,26 +169,30 @@ export class LemonSqueezyClient {
    * Cancel subscription
    */
   async cancelSubscription(subscriptionId: string): Promise<void> {
-    await this.makeRequest('DELETE', `/subscriptions/${subscriptionId}`);
+    await this.makeRequest("DELETE", `/subscriptions/${subscriptionId}`);
   }
 
   /**
    * Make authenticated request to LemonSqueezy API
    */
-  private async makeRequest(method: string, endpoint: string, data?: any): Promise<any> {
+  private async makeRequest(
+    method: string,
+    endpoint: string,
+    data?: any
+  ): Promise<any> {
     const url = `${this.baseUrl}${endpoint}`;
-    const options: RequestInit = {
+    const options: any = {
       method,
       headers: {
-        'Accept': 'application/vnd.api+json',
-        'Authorization': `Bearer ${this.apiKey}`
-      }
+        Accept: "application/vnd.api+json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
     };
 
-    if (data && (method === 'POST' || method === 'PATCH')) {
+    if (data && (method === "POST" || method === "PATCH")) {
       options.headers = {
         ...options.headers,
-        'Content-Type': 'application/vnd.api+json'
+        "Content-Type": "application/vnd.api+json",
       };
       options.body = JSON.stringify(data);
     }
@@ -187,7 +211,7 @@ export class LemonSqueezyClient {
     }
 
     // DELETE requests typically don't return content
-    if (method === 'DELETE') {
+    if (method === "DELETE") {
       return;
     }
 
@@ -197,22 +221,26 @@ export class LemonSqueezyClient {
   /**
    * Verify webhook signature using HMAC-SHA256
    */
-  static verifyWebhookSignature(payload: string, signature: string, secret: string): boolean {
+  static verifyWebhookSignature(
+    payload: string,
+    signature: string,
+    secret: string
+  ): boolean {
     try {
-      const crypto = require('crypto');
-      const hmac = crypto.createHmac('sha256', secret);
-      hmac.update(payload, 'utf8');
-      const expectedSignature = hmac.digest('hex');
-      
+      const crypto = require("crypto");
+      const hmac = crypto.createHmac("sha256", secret);
+      hmac.update(payload, "utf8");
+      const expectedSignature = hmac.digest("hex");
+
       // LemonSqueezy sends signature in format "sha256=<hash>"
-      const receivedSignature = signature.replace('sha256=', '');
-      
+      const receivedSignature = signature.replace("sha256=", "");
+
       return crypto.timingSafeEqual(
-        Buffer.from(expectedSignature, 'hex'),
-        Buffer.from(receivedSignature, 'hex')
+        Buffer.from(expectedSignature, "hex"),
+        Buffer.from(receivedSignature, "hex")
       );
     } catch (error) {
-      console.error('Signature verification error:', error);
+      console.error("Signature verification error:", error);
       return false;
     }
   }

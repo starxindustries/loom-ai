@@ -2,7 +2,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { 
-  UserEncryptionProfile, 
   CreateProfileRequest, 
   UpdateProfileRequest 
 } from "@/types/encryption";
@@ -10,7 +9,7 @@ import {
 /**
  * GET - Retrieve user encryption profile
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   const requestId = Math.random().toString(36).substring(7);
   console.log(`[PROFILE-${requestId}] 📥 GET user encryption profile`);
 

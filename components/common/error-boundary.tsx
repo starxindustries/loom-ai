@@ -16,8 +16,6 @@ import {
   Home, 
   Bug, 
   Mail,
-  ArrowLeft,
-  ExternalLink
 } from 'lucide-react';
 import { errorHandlingService, ErrorType, ErrorSeverity } from '@/lib/error-handling-service';
 
@@ -65,9 +63,11 @@ export class ErrorBoundary extends Component<Props, State> {
       ErrorType.UNKNOWN_ERROR,
       error,
       {
-        componentStack: errorInfo.componentStack,
-        errorBoundary: true,
-        retryCount: this.state.retryCount,
+        metadata: {
+          componentStack: errorInfo.componentStack,
+          errorBoundary: true,
+          retryCount: this.state.retryCount,
+        },
       },
       ErrorSeverity.HIGH
     );

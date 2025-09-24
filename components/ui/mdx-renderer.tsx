@@ -128,7 +128,9 @@ export const MDXRenderer: React.FC<MDXRendererProps> = ({ content, className = "
         console.error('MDX compilation error:', err);
         setError(err instanceof Error ? err.message : 'Failed to compile MDX');
         // Fallback to plain text if MDX compilation fails
-        setComponent(() => ({ children }: any) => <div className="text-foreground">{content}</div>);
+        const FallbackComponent = () => <div className="text-foreground">{content}</div>;
+        FallbackComponent.displayName = "MDXFallback";
+        setComponent(() => FallbackComponent);
       }
     };
 
@@ -155,3 +157,6 @@ export const MDXRenderer: React.FC<MDXRendererProps> = ({ content, className = "
     </div>
   );
 };
+
+// Explicit display name for eslint react/display-name
+MDXRenderer.displayName = "MDXRenderer";

@@ -4,7 +4,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "echo 'ESLint disabled'",
+    "lint": "next lint",
     "migrate": "node scripts/run-migrations.js run",
     "migrate:status": "node scripts/run-migrations.js status",
     "migrate:users": "node scripts/migrate-users.js migrate",

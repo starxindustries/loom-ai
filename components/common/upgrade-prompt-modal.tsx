@@ -18,7 +18,6 @@ import {
   Zap, 
   Check, 
   ExternalLink,
-  X
 } from 'lucide-react';
 
 interface UpgradePromptModalProps {
@@ -84,7 +83,7 @@ export function UpgradePromptModal({
                 {upgradePrompt.title}
               </DialogTitle>
               <DialogDescription className="text-base">
-                You've reached your usage limit for {getResourceName(upgradePrompt.resourceType)}
+                You&apos;ve reached your usage limit for {getResourceName(upgradePrompt.resourceType)}
               </DialogDescription>
             </div>
           </div>
@@ -200,10 +199,14 @@ export function useUpgradePrompt() {
       setIsOpen(true);
     };
 
-    window.addEventListener('usage-limit-exceeded', handleUsageLimitExceeded as EventListener);
-    
+    const onUsageLimitExceeded = (event: Event) => {
+      handleUsageLimitExceeded(event as CustomEvent);
+    };
+
+    window.addEventListener('usage-limit-exceeded', onUsageLimitExceeded);
+
     return () => {
-      window.removeEventListener('usage-limit-exceeded', handleUsageLimitExceeded as EventListener);
+      window.removeEventListener('usage-limit-exceeded', onUsageLimitExceeded);
     };
   }, []);
 

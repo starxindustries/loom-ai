@@ -7,11 +7,9 @@ import { PromptBox } from "@/components/ui/chatgpt-prompt-input";
 import { Button } from "@/components/ui/button";
 // import { Textarea } from "@/components/ui/textarea";
 import {
-  SquareIcon,
   SendIcon,
   BotIcon,
   UserIcon,
-  RotateCcwIcon,
 } from "lucide-react";
 import { Message, ChatSystemProps } from "@/types";
 import { createClient } from "@/lib/supabase/client";
@@ -122,8 +120,6 @@ const MessageBubble: React.FC<{
 
 export const ChatSystem: React.FC<ChatSystemProps> = ({
   onSendMessage,
-  onStopGeneration,
-  onClearMessages,
   messages = [],
   isLoading = false,
 }) => {

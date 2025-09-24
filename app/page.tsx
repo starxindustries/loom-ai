@@ -13,14 +13,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import {
   Brain,
-  Clock,
   Shield,
   Globe,
   Star,
   Check,
   Zap,
-  Cpu,
-  Database,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";

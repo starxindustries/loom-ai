@@ -142,7 +142,7 @@ export function PlanComparison({
 
               {wouldExceedLimits(plan) && (
                 <div className="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-                  Warning: Your current usage exceeds this plan's limits
+                  Warning: Your current usage exceeds this plan&apos;s limits
                 </div>
               )}
 

@@ -1,7 +1,7 @@
 "use client";
 import { createClient } from "@/lib/supabase/client";
 import { redirect } from "next/navigation";
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { toast } from "sonner";
 
 export default function AuthLayout({
@@ -13,7 +13,7 @@ export default function AuthLayout({
     const checkUser = async () => {
       const supabase = createClient();
 
-      const { data, error } = await supabase.auth.getClaims();
+      const { data } = await supabase.auth.getClaims();
       if (data && data.claims) {
         toast.loading("You are already Logged-in. Redirecting...", {
           id: "redirect-toast",

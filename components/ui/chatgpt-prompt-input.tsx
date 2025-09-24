@@ -3,6 +3,7 @@ import * as React from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import Image from "next/image";
 
 // --- Utility Function & Radix Primitives (Unchanged) ---
 type ClassValue = string | number | boolean | null | undefined;
@@ -56,7 +57,6 @@ const PopoverContent = React.forwardRef<
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 const Dialog = DialogPrimitive.Root;
 const DialogPortal = DialogPrimitive.Portal;
-const DialogTrigger = DialogPrimitive.Trigger;
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -427,7 +427,9 @@ export const PromptBox = React.forwardRef<
               onClick={() => setIsImageDialogOpen(true)}
             >
               {" "}
-              <img
+              <Image
+                width={100}
+                height={100}
                 src={imagePreview}
                 alt="Image preview"
                 className="h-14.5 w-14.5 rounded-2xl"
@@ -444,7 +446,9 @@ export const PromptBox = React.forwardRef<
           </div>{" "}
           <DialogContent>
             {" "}
-            <img
+            <Image
+              width={100}
+              height={100}
               src={imagePreview}
               alt="Full size preview"
               className="w-full max-h-[95vh] object-contain rounded-[24px]"
@@ -577,3 +581,6 @@ export const PromptBox = React.forwardRef<
     </div>
   );
 });
+
+// Explicit display name to satisfy eslint react/display-name rule
+PromptBox.displayName = "PromptBox";

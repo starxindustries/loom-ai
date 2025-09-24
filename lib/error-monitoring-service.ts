@@ -51,7 +51,7 @@ export class ErrorMonitoringService {
   private healthChecks: Map<string, HealthCheck> = new Map();
   private alertRules: AlertRule[] = [];
   private activeAlerts: Map<string, Alert> = new Map();
-  private monitoringInterval?: NodeJS.Timeout;
+  private monitoringInterval?: ReturnType<typeof setInterval>;
 
   public static getInstance(): ErrorMonitoringService {
     if (!ErrorMonitoringService.instance) {

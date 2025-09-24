@@ -6,6 +6,7 @@ import { User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import Image from "next/image";
 
 export function ProfileButton() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -42,7 +43,9 @@ export function ProfileButton() {
         className="relative h-8 w-8 rounded-full p-0 hover:bg-muted/50 transition-colors"
       >
         {profileImageUrl ? (
-          <img
+          <Image
+            width={32}
+            height={32}
             src={profileImageUrl}
             alt="Profile"
             className="h-8 w-8 rounded-full object-cover"

@@ -1,10 +1,9 @@
-import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { subscriptionService } from "@/lib/subscription-service";
 import { usageTrackingService } from "@/lib/usage-tracking-service";
 import { BillingDashboardData } from "@/types/subscription";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     const {
