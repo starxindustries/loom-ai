@@ -5,6 +5,7 @@ import {
   CreditCardIcon,
   LogOutIcon,
   MoreVerticalIcon,
+  SettingsIcon,
   UserCircleIcon,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 export function NavUser({
   user,
@@ -94,18 +96,24 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <UserCircleIcon />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCardIcon />
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BellIcon />
-                Notifications
-              </DropdownMenuItem>
+              <Link href="/protected/profile">
+                <DropdownMenuItem>
+                  <UserCircleIcon />
+                  Account
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/protected/billing">
+                <DropdownMenuItem className="cursor-pointer flex w-full">
+                  <CreditCardIcon />
+                  Billing
+                </DropdownMenuItem>
+              </Link>
+              <Link href="/protected/settings">
+                <DropdownMenuItem className="cursor-pointer flex w-full">
+                  <SettingsIcon />
+                  Settings
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

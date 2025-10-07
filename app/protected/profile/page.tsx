@@ -81,14 +81,14 @@ export default function ProfilePage() {
     return (
       <div className="relative">
         {/* Fixed controls */}
-        <div className="fixed top-4 left-4 z-50">
+        {/* <div className="fixed top-4 left-4 z-50">
           <ProfileButton />
         </div>
         <div className="fixed top-4 right-4 z-50">
           <ThemeSwitcher />
-        </div>
+        </div> */}
 
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
+        <div className="flex min-h-screen w-full flex-col items-center justify-center p-4">
           <div className="w-full max-w-2xl">
             <div className="h-8 w-32 bg-muted animate-pulse rounded mb-4 mx-auto" />
             <div className="h-64 bg-muted animate-pulse rounded" />
@@ -101,14 +101,14 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="relative">
-        <div className="fixed top-4 left-4 z-50">
+        {/* <div className="fixed top-4 left-4 z-50">
           <ProfileButton />
         </div>
         <div className="fixed top-4 right-4 z-50">
           <ThemeSwitcher />
-        </div>
+        </div> */}
 
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
+        <div className="flex min-h-screen w-full flex-col items-center justify-center p-4">
           <Card className="w-full max-w-md">
             <CardHeader>
               <CardTitle>Not Authenticated</CardTitle>
@@ -148,12 +148,12 @@ export default function ProfilePage() {
   return (
     <div className="relative">
       {/* Fixed controls */}
-      <div className="fixed top-4 left-4 z-50">
+      {/* <div className="fixed top-4 left-4 z-50">
         <ProfileButton />
       </div>
       <div className="fixed top-4 right-4 z-50">
         <ThemeSwitcher />
-      </div>
+      </div> */}
 
       <motion.div
         className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4"

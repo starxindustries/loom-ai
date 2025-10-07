@@ -91,7 +91,7 @@ export const config = {
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
      * Feel free to modify this pattern to include more paths.
      */
-    // Exclude api/webhooks (e.g., LemonSqueezy) from middleware to prevent 307/redirects & body tampering
-    "/((?!api/webhooks|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Exclude api/webhooks and api/auth (OAuth callbacks) from middleware to prevent 307/redirects & body tampering
+    "/((?!api/webhooks|api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

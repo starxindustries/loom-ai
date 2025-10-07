@@ -53,6 +53,7 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+
   *,
   ::after,
   ::before,
@@ -64,99 +65,111 @@
 
 @layer base {
   :root {
-    --background: #f5f5f5;
-    --foreground: #0f1624;
-    --card: #f6f6f6;
-    --card-foreground: #0f1624;
-    --popover: #ffffff;
-    --popover-foreground: #0f1624;
-    --primary: #1ca04c;
-    --primary-foreground: #f6f6f6;
-    --secondary: #f6f6f6;
-    --secondary-foreground: #0d1526;
-    --muted: #b0ddb6;
-    --muted-foreground: #527051;
-    --accent: #ededed;
-    --accent-foreground: #0d1526;
-    --destructive: #e51414;
-    --destructive-foreground: #ffffff;
-    --border: #ffffff;
-    --input: #aad2a7;
-    --ring: #1ca04c;
-    --chart-1: #1ca04c;
-    --chart-2: #47e781;
-    --chart-3: #25cb61;
-    --chart-4: #12843c;
-    --chart-5: #116831;
-    --sidebar: #bdd6c3;
-    --sidebar-foreground: #517057;
-    --sidebar-primary: #ffffff;
-    --sidebar-primary-foreground: #0d1526;
-    --sidebar-accent: #1ca04c;
-    --sidebar-accent-foreground: #ffffff;
-    --sidebar-border: #bdd6c1;
-    --sidebar-ring: #1ca04c;
-    --font-sans: Asta Sans, ui-sans-serif, sans-serif, system-ui;
-    --font-serif: Inter;
-    --font-mono: monospace;
-    --radius: 1.55rem;
-    --shadow-2xs: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.34);
-    --shadow-xs: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.34);
-    --shadow-sm: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 1px 2px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 1px 2px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-md: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 2px 4px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-lg: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 4px 6px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-xl: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 8px 10px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-2xl: 0px 4px 20px -14.5px hsl(0 0% 0% / 1.68);
+    --background: hsl(55.0000 26.0870% 90.9804%);
+    --foreground: hsl(30.0000 19.5652% 18.0392%);
+    --card: hsl(55.0000 26.0870% 90.9804%);
+    --card-foreground: hsl(0 0% 27.8431%);
+    --popover: hsl(55.0000 26.0870% 90.9804%);
+    --popover-foreground: hsl(0 0% 27.8431%);
+    --primary: hsl(0 0% 27.8431%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(0 0% 27.8431%);
+    --secondary-foreground: hsl(0 0% 100%);
+    --muted: hsl(52.9412 24.6377% 86.4706%);
+    --muted-foreground: hsl(35.1724 17.5758% 32.3529%);
+    --accent: hsl(52.9412 24.6377% 86.4706%);
+    --accent-foreground: hsl(0 0% 36.0784%);
+    --destructive: hsl(20 46.2555% 44.5098%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(52.9412 24.6377% 86.4706%);
+    --input: hsl(52.9412 24.6377% 86.4706%);
+    --ring: hsl(0 0% 43.9216%);
+    --chart-1: hsl(0 0% 56.0784%);
+    --chart-2: hsl(0 0% 47.0588%);
+    --chart-3: hsl(0 0% 41.9608%);
+    --chart-4: hsl(0 0% 34.1176%);
+    --chart-5: hsl(0 0% 27.8431%);
+    --sidebar: hsl(52.9412 24.6377% 86.4706%);
+    --sidebar-foreground: hsl(0 0% 27.8431%);
+    --sidebar-primary: hsl(150.0000 0.9804% 40%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(0 0% 83.1373%);
+    --sidebar-accent-foreground: hsl(0 0% 34.9020%);
+    --sidebar-border: hsl(54.0000 18.8679% 79.2157%);
+    --sidebar-ring: hsl(0 0% 41.9608%);
+    --font-sans: Montserrat, sans-serif;
+    --font-serif: Merriweather, serif;
+    --font-mono: Source Code Pro, monospace;
+    --radius: 1.25rem;
+    --shadow-x: 0;
+    --shadow-y: 1px;
+    --shadow-blur: 3px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.1;
+    --shadow-color: #000000;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
     --tracking-normal: 0em;
     --spacing: 0.25rem;
   }
   
   .dark {
-    --background: #1d1816;
-    --foreground: #f2f2f2;
-    --card: #18181b;
-    --card-foreground: #f2f2f2;
-    --popover: #18181b;
-    --popover-foreground: #f2f2f2;
-    --primary: #1ca04c;
-    --primary-foreground: #1d1816;
-    --secondary: #202022;
-    --secondary-foreground: #f2f2f2;
-    --muted: #202022;
-    --muted-foreground: #80808c;
-    --accent: #202022;
-    --accent-foreground: #f2f2f2;
-    --destructive: #e51414;
-    --destructive-foreground: #ffffff;
-    --border: #202022;
-    --input: #202022;
-    --ring: #1ca04c;
-    --chart-1: #1ca04c;
-    --chart-2: #47e781;
-    --chart-3: #25cb61;
-    --chart-4: #12843c;
-    --chart-5: #116831;
-    --sidebar: #1d1816;
-    --sidebar-foreground: #80808c;
-    --sidebar-primary: #18181b;
-    --sidebar-primary-foreground: #f2f2f2;
-    --sidebar-accent: #1ca04c;
-    --sidebar-accent-foreground: #1d1816;
-    --sidebar-border: #1d1816;
-    --sidebar-ring: #1ca04c;
-    --font-sans: Asta Sans, ui-sans-serif, sans-serif, system-ui;
-    --font-serif: Inter;
-    --font-mono: monospace;
-    --radius: 1.55rem;
-    --shadow-2xs: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.34);
-    --shadow-xs: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.34);
-    --shadow-sm: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 1px 2px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 1px 2px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-md: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 2px 4px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-lg: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 4px 6px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-xl: 0px 4px 20px -14.5px hsl(0 0% 0% / 0.67), 0px 8px 10px -15.5px hsl(0 0% 0% / 0.67);
-    --shadow-2xl: 0px 4px 20px -14.5px hsl(0 0% 0% / 1.68);
+    --background: hsl(153.3333 13.4328% 13.1373%);
+    --foreground: hsl(50.0000 18.7500% 87.4510%);
+    --card: hsl(120 7.2165% 19.0196%);
+    --card-foreground: hsl(50.0000 18.7500% 87.4510%);
+    --popover: hsl(142.5000 8.1633% 19.2157%);
+    --popover-foreground: hsl(50.0000 18.7500% 87.4510%);
+    --primary: hsl(0 0% 83.1373%);
+    --primary-foreground: hsl(145.2632 37.2549% 10%);
+    --secondary: hsl(120 6.2500% 25.0980%);
+    --secondary-foreground: hsl(138.0000 10.6383% 81.5686%);
+    --muted: hsl(142.5000 8.1633% 19.2157%);
+    --muted-foreground: hsl(56.2500 13.3333% 76.4706%);
+    --accent: hsl(0 0% 47.8431%);
+    --accent-foreground: hsl(50.0000 18.7500% 87.4510%);
+    --destructive: hsl(20 46.2555% 44.5098%);
+    --destructive-foreground: hsl(50.0000 18.7500% 87.4510%);
+    --border: hsl(135 6.2500% 25.0980%);
+    --input: hsl(135 6.2500% 25.0980%);
+    --ring: hsl(0 0% 65.0980%);
+    --chart-1: hsl(0 0% 72.9412%);
+    --chart-2: hsl(0 0% 70.1961%);
+    --chart-3: hsl(0 0% 63.1373%);
+    --chart-4: hsl(0 0% 52.9412%);
+    --chart-5: hsl(0 0% 52.9412%);
+    --sidebar: hsl(153.3333 13.4328% 13.1373%);
+    --sidebar-foreground: hsl(50.0000 18.7500% 87.4510%);
+    --sidebar-primary: hsl(0 0% 63.1373%);
+    --sidebar-primary-foreground: hsl(145.2632 37.2549% 10%);
+    --sidebar-accent: hsl(0 0% 50.9804%);
+    --sidebar-accent-foreground: hsl(50.0000 18.7500% 87.4510%);
+    --sidebar-border: hsl(135 6.2500% 25.0980%);
+    --sidebar-ring: hsl(0 0% 58.0392%);
+    --font-sans: Montserrat, sans-serif;
+    --font-serif: Merriweather, serif;
+    --font-mono: Source Code Pro, monospace;
+    --radius: 1.25rem;
+    --shadow-x: 0;
+    --shadow-y: 1px;
+    --shadow-blur: 3px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.1;
+    --shadow-color: #000000;
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   }
   
   @theme inline {
@@ -213,20 +226,82 @@
   }
 }
 
+
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
+    scroll-behavior: smooth;
   }
 }
 
 /* Hide scrollbars globally, including nested components */
 * {
-  scrollbar-width: none;         /* Firefox */
-  -ms-overflow-style: none;      /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
 }
+
 *::-webkit-scrollbar {
-  display: none;                 /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+/* ReactFlow specific styles */
+.react-flow__edge-path {
+  stroke-width: 3px !important;
+  stroke-opacity: 0.8 !important;
+}
+
+.react-flow__edge.animated path {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+.react-flow__edge.animated path {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+  from {
+    stroke-dashoffset: 10;
+  }
+}
+
+.react-flow__handle {
+  width: 8px !important;
+  height: 8px !important;
+  border: 2px solid hsl(var(--background)) !important;
+}
+
+.react-flow__handle-connecting {
+  background: hsl(var(--primary)) !important;
+}
+
+.react-flow__handle-valid {
+  background: hsl(var(--primary)) !important;
+}
+
+/* Ensure edges are always visible */
+.react-flow__edges {
+  z-index: 1 !important;
+}
+
+.react-flow__nodes {
+  z-index: 2 !important;
+}
+
+/* Custom edge styling for better visibility */
+.react-flow__edge-smoothstep {
+  stroke: hsl(var(--primary)) !important;
+  stroke-width: 3px !important;
+}
+
+.react-flow__arrowhead {
+  fill: hsl(var(--primary)) !important;
 }

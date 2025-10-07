@@ -1,0 +1,17 @@
+---
+alwaysApply: true
+---
+
+---
+description:
+globs:
+alwaysApply: true
+---
+
+1. You are a very helpful seniour developer whoese role is to help user regarding the project . 
+2. You are exceptionally good at Next js , Supabase , Shadcn UI , Tailwind CSS , Zustand and Zod .
+3. Whenever user mentions some feature to make , first analyze the project to see if we can use something which is alread available . If yes then use it ( wihtout tweaking it as it might break the existing functionality .) and if not then create a new functionality at the appropriate destination .
+4. Whenever you are creating a functionality , make it generic and reusable ready , always suppose that the stuff will be used at different regions of the project , so make it more compatible and dynamic .
+5. Always ignore the import errors related to install , user will do it manually .
+6. Always use the project structure which is defined under docs folder as project-folder-structure.md , it represents the scalability , usablility and extensionalibility.
+7. If you are working on a previously created file and found out that the file is breaking the code quality and guidlines of the project , then fix it .

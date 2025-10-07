@@ -187,8 +187,14 @@ export async function addMemory(
     });
 
     if (error) {
-      console.error(`[STORE-${memoryId}] ❌ Database error:`, error.message);
-      return { success: false, error: error.message };
+      const msg = error.message || "";
+      const isMissingLegacyMemories = msg.includes("relation \"memories\" does not exist") || msg.includes("function store_memory") || msg.includes("store_memory does not exist");
+      if (isMissingLegacyMemories) {
+        console.log(`[STORE-${memoryId}] ℹ️ Skipping legacy memories storage (not configured)`);
+        return { success: true };
+      }
+      console.error(`[STORE-${memoryId}] ❌ Database error:`, msg);
+      return { success: false, error: msg };
     }
 
     const storedMemoryId = data?.[0]?.id;

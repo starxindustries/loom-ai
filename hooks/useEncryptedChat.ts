@@ -575,6 +575,7 @@ export const useEncryptedChat = (options: EncryptedChatOptions = {}) => {
                     // Mark streaming as complete
                     updateMessage(assistantMessage.id, {
                       isStreaming: false,
+                      attachments: data.attachments || undefined,
                     });
 
                     // Handle encryption of assistant response if needed

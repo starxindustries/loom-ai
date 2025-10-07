@@ -3,6 +3,9 @@ import { NextRequest } from "next/server";
 import OpenAI from "openai";
 import { createClient } from "@/lib/supabase/server";
 import { usageLimitMiddleware } from "@/lib/usage-limit-middleware";
+import { createReminderService } from "@/lib/reminder-service";
+import { createIntegrationService } from "@/lib/integration-service";
+import { CreateReminderRequest } from "@/types/reminder";
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -117,13 +120,25 @@ export async function POST(request: NextRequest) {
     const openaiMessages = [
       {
         role: "system" as const,
-        content: `You are a helpful AI assistant with encrypted memory capabilities.
+        content: `You are a helpful AI assistant with encrypted memory and task management capabilities.
 
 MEMORY SYSTEM GUIDELINES:
-- You have access to two memory tools: search_encrypted_memories and store_encrypted_memory
+- You have access to memory tools: search_encrypted_memories and store_encrypted_memory
 - Use search_encrypted_memories when users ask about their information ('what's my...', 'do you remember...')
 - ALWAYS use store_encrypted_memory when users share important personal information
 - Be proactive about storing meaningful information that users share
+
+REMINDER & TASK CREATION:
+- Use create_reminder when users want to be reminded of something or schedule a task
+- Examples: "remind me to...", "schedule a meeting", "send an email tomorrow", "set up a recurring task"
+- For simple reminders, use task_type: "reminder"
+- For automated actions (emails, calendar events, etc.), use task_type: "action" with appropriate integration_slug
+- For repeating tasks, use task_type: "recurring" with recurrence_rule
+- Always ask for clarification if the scheduled time is ambiguous
+- If an action requires an integration (like Gmail, Google Calendar), include the integration_slug
+- Common integrations: gmail, google-calendar, slack, notion, airtable
+- Current date and time: ${new Date().toISOString()}
+- When scheduling, always ensure the time is in the future
 
 WHEN TO STORE MEMORIES (use store_encrypted_memory):
 ✅ Personal facts: birthdays, age, name, location, work, education
@@ -213,6 +228,123 @@ Be conversational and acknowledge when you store information: "Got it! I'll reme
                 },
               },
             },
+            {
+              type: "function" as const,
+              function: {
+                name: "search_encrypted_files",
+                description:
+                  "Search user's encrypted files by name/description/keywords. Returns ids and metadata only (no content).",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    query: {
+                      type: "string",
+                      description: "Query for filename, description or keyword hints",
+                    },
+                    limit: {
+                      type: "number",
+                      description: "Max number of files to return",
+                      default: 5,
+                    },
+                  },
+                  required: ["query"],
+                },
+              },
+            },
+            {
+              type: "function" as const,
+              function: {
+                name: "get_encrypted_file_metadata",
+                description:
+                  "Get metadata for a specific encrypted file by id (no content).",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    file_id: {
+                      type: "string",
+                      description: "The id of the encrypted file",
+                    },
+                  },
+                  required: ["file_id"],
+                },
+              },
+            },
+            {
+              type: "function" as const,
+              function: {
+                name: "create_reminder",
+                description: "Create a reminder or scheduled task for the user. Use this when the user wants to be reminded of something or schedule a task.",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    title: {
+                      type: "string",
+                      description: "Title of the reminder (required)",
+                    },
+                    description: {
+                      type: "string",
+                      description: "Optional description with more details",
+                    },
+                    scheduled_at: {
+                      type: "string",
+                      description: "When to trigger the reminder (ISO 8601 format, e.g., '2024-01-15T10:30:00Z')",
+                    },
+                    timezone: {
+                      type: "string",
+                      description: "User's timezone (e.g., 'America/New_York'). Defaults to UTC if not provided.",
+                      default: "UTC",
+                    },
+                    task_type: {
+                      type: "string",
+                      enum: ["reminder", "action", "recurring"],
+                      description: "Type of task: 'reminder' for simple notifications, 'action' for automated tasks, 'recurring' for repeating tasks",
+                    },
+                    recurrence_rule: {
+                      type: "string",
+                      description: "RRULE format for recurring tasks (e.g., 'FREQ=DAILY;INTERVAL=1')",
+                    },
+                    recurrence_end_date: {
+                      type: "string",
+                      description: "End date for recurring tasks (ISO 8601 format)",
+                    },
+                    action_type: {
+                      type: "string",
+                      description: "Type of action to perform (e.g., 'send_email', 'create_calendar_event', 'send_slack_message')",
+                    },
+                    integration_slug: {
+                      type: "string",
+                      description: "Integration provider slug (e.g., 'gmail', 'google-calendar', 'slack')",
+                    },
+                    action_config: {
+                      type: "object",
+                      description: "Configuration for the action (varies by action_type)",
+                      properties: {
+                        to: { type: "string", description: "Email recipient (for email actions)" },
+                        subject: { type: "string", description: "Email subject (for email actions)" },
+                        body: { type: "string", description: "Email body (for email actions)" },
+                        summary: { type: "string", description: "Event title (for calendar actions)" },
+                        start: { type: "string", description: "Event start time (for calendar actions)" },
+                        end: { type: "string", description: "Event end time (for calendar actions)" },
+                        channel: { type: "string", description: "Slack channel (for Slack actions)" },
+                        text: { type: "string", description: "Message text (for messaging actions)" },
+                      },
+                    },
+                    priority: {
+                      type: "string",
+                      enum: ["low", "medium", "high", "urgent"],
+                      description: "Priority level of the task",
+                      default: "medium",
+                    },
+                    tags: {
+                      type: "array",
+                      items: { type: "string" },
+                      description: "Optional tags for organizing tasks",
+                    },
+                  },
+                  required: ["title", "scheduled_at", "task_type"],
+                },
+              },
+            },
           ]
         : undefined;
 
@@ -234,6 +366,7 @@ Be conversational and acknowledge when you store information: "Got it! I'll reme
     const encoder = new TextEncoder();
     let fullResponse = "";
     let currentToolCalls: any[] = [];
+    let toolResults: any[] = [];
 
     const readableStream = new ReadableStream({
       async start(controller) {
@@ -294,7 +427,7 @@ Be conversational and acknowledge when you store information: "Got it! I'll reme
                 });
                 controller.enqueue(encoder.encode(`data: ${toolData}\n\n`));
 
-                const toolResults = await executeToolCalls(
+                toolResults = await executeToolCalls(
                   currentToolCalls,
                   userId,
                   requestId,
@@ -314,6 +447,7 @@ Be conversational and acknowledge when you store information: "Got it! I'll reme
                       role: "tool" as const,
                       content: result.content,
                       tool_call_id: result.tool_call_id,
+                      attachments: result.attachments,
                     })),
                   ];
 
@@ -347,9 +481,15 @@ Be conversational and acknowledge when you store information: "Got it! I'll reme
           console.log(
             `[ENCRYPTED-CHAT-${requestId}] ✅ Response completed: ${fullResponse.length} characters`
           );
+          // Collect attachments from tool results
+          const allAttachments = toolResults
+            .filter(result => result.attachments && result.attachments.length > 0)
+            .flatMap(result => result.attachments);
+
           const completionData = JSON.stringify({
             type: "done",
             encrypted: true,
+            attachments: allAttachments.length > 0 ? allAttachments : undefined,
             response_metadata: {
               encryption_enabled: true,
               user_authenticated: !!userId,
@@ -489,8 +629,8 @@ async function executeToolCalls(
   requestId: string,
   sessionKey?: number[] | null,
   masterSalt?: string | null
-): Promise<{ tool_call_id: string; content: string }[]> {
-  const results: { tool_call_id: string; content: string }[] = [];
+): Promise<{ tool_call_id: string; content: string; attachments?: any[] }[]> {
+  const results: { tool_call_id: string; content: string; attachments?: any[] }[] = [];
 
   for (const toolCall of toolCalls) {
     if (toolCall.function.name === "search_encrypted_memories") {
@@ -704,6 +844,90 @@ async function executeToolCalls(
           content: "Error storing encrypted memory.",
         });
       }
+    } else if (toolCall.function.name === "search_encrypted_files") {
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        const supabase = await createClient();
+        const query = (args.query || '').toLowerCase();
+
+        // Simple search over name/description/keyword_hints (non-sensitive fields)
+        const { data: files, error } = await supabase
+          .from('encrypted_user_files')
+          .select('id, name, original_name, content_type, file_size, keyword_hints, description, created_at')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(args.limit || 5);
+
+        if (error) throw error;
+
+        const filtered = (files || []).filter((f: any) => {
+          const inName = f.name?.toLowerCase().includes(query) || f.original_name?.toLowerCase().includes(query);
+          const inDesc = f.description?.toLowerCase().includes(query);
+          const inHints = Array.isArray(f.keyword_hints) && f.keyword_hints.some((h: string) => h.toLowerCase().includes(query));
+          return inName || inDesc || inHints;
+        });
+
+        const content = filtered.length > 0
+          ? `Found ${filtered.length} encrypted file(s) related to "${args.query}":\n` +
+            filtered.map((f: any) => `- ${f.name} (${f.content_type}, ${Math.round(f.file_size/1024)}KB) id=${f.id}`).join('\n') +
+            "\nUse get_encrypted_file_metadata with a chosen id to fetch details, then ask the client to decrypt."
+          : `I couldn't find any encrypted files related to "${args.query}".`;
+
+        // Create file attachments for the frontend
+        const attachments = filtered.map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          originalName: f.original_name,
+          contentType: f.content_type,
+          fileSize: f.file_size,
+          encrypted: true
+        }));
+
+        results.push({ 
+          tool_call_id: toolCall.id, 
+          content,
+          attachments: attachments.length > 0 ? attachments : undefined
+        });
+      } catch (error) {
+        results.push({ tool_call_id: toolCall.id, content: 'Error searching encrypted files.' });
+      }
+    } else if (toolCall.function.name === "get_encrypted_file_metadata") {
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        const supabase = await createClient();
+        const { data, error } = await supabase
+          .from('encrypted_user_files')
+          .select('id, name, original_name, content_type, file_size, keyword_hints, description, created_at')
+          .eq('id', args.file_id)
+          .eq('user_id', userId)
+          .single();
+        if (error || !data) throw error || new Error('Not found');
+        const content = `Encrypted file metadata:\n- id: ${data.id}\n- name: ${data.name}\n- original_name: ${data.original_name}\n- type: ${data.content_type}\n- size: ${Math.round(data.file_size/1024)}KB\n- description: ${data.description || 'N/A'}\n- created_at: ${new Date(data.created_at).toLocaleString()}`;
+        results.push({ tool_call_id: toolCall.id, content });
+      } catch (error) {
+        results.push({ tool_call_id: toolCall.id, content: 'Error fetching file metadata.' });
+      }
+    } else if (toolCall.function.name === "create_reminder") {
+      try {
+        const args = JSON.parse(toolCall.function.arguments);
+        console.log(`[ENCRYPTED-CHAT-${requestId}] ⏰ Creating reminder: "${args.title}"`);
+        
+        const result = await createReminderFromAI(userId, args, requestId);
+        
+        results.push({
+          tool_call_id: toolCall.id,
+          content: result.content,
+        });
+
+        console.log(`[ENCRYPTED-CHAT-${requestId}] ✅ Reminder creation completed: ${result.success ? 'success' : 'failed'}`);
+        console.log({result})
+      } catch (error) {
+        console.error(`[ENCRYPTED-CHAT-${requestId}] ❌ Reminder creation error:`, error);
+        results.push({
+          tool_call_id: toolCall.id,
+          content: "Error creating reminder. Please try again.",
+        });
+      }
     }
   }
 
@@ -867,5 +1091,149 @@ async function encryptMemoryForStorage(
       error
     );
     throw error;
+  }
+}
+
+/**
+ * Create reminder from AI tool call with integration validation (encrypted chat version)
+ */
+async function createReminderFromAI(
+  userId: string, 
+  args: any, 
+  requestId: string
+): Promise<{ success: boolean; content: string }> {
+  try {
+    const supabase = await createClient();
+      console.log({args})
+      console.log({userId})
+      console.log({requestId})
+    // Validate required fields
+    if (!args.title || !args.scheduled_at || !args.task_type) {
+      return {
+        success: false,
+        content: "❌ Missing required fields. I need at least a title, scheduled time, and task type to create a reminder."
+      };
+    }
+
+    // Validate scheduled_at is in the future (with 30 second buffer for processing)
+    const scheduledDate = new Date(args.scheduled_at);
+    const now = new Date();
+    const bufferTime = 30 * 1000; // 30 seconds in milliseconds
+    const minimumTime = new Date(now.getTime() + bufferTime);
+    
+    console.log(`[ENCRYPTED-CHAT-${requestId}] 📅 Date validation:`, {
+      scheduled: scheduledDate.toISOString(),
+      now: now.toISOString(),
+      minimumTime: minimumTime.toISOString(),
+      scheduledTime: scheduledDate.getTime(),
+      nowTime: now.getTime(),
+      isValid: scheduledDate > minimumTime
+    });
+    
+    if (scheduledDate <= minimumTime) {
+      return {
+        success: false,
+        content: `❌ The scheduled time must be at least 30 seconds in the future. Scheduled: ${scheduledDate.toISOString()}, Current: ${now.toISOString()}`
+      };
+    }
+
+    // Check if integration is required and validate credentials
+    if (args.integration_slug && args.task_type === 'action') {
+      console.log(`[ENCRYPTED-CHAT-${requestId}] 🔍 Validating integration: ${args.integration_slug} for action: ${args.action_type}`);
+      
+      const integrationService = createIntegrationService(supabase);
+      const validation = await integrationService.validateIntegrationForAction(
+        userId,
+        args.integration_slug,
+        args.action_type || 'unknown'
+      );
+
+      if (!validation.valid) {
+        const integrationName = validation.error?.includes('not found') 
+          ? args.integration_slug 
+          : validation.error?.split(' ')[0] || args.integration_slug;
+        
+        return {
+          success: false,
+          content: `❌ **Integration Required**: To perform this action, you need to set up your ${integrationName} integration first.\n\n` +
+                  `Please go to Settings → Integrations and connect your ${integrationName} account, then try creating this reminder again.\n\n` +
+                  `${validation.toast?.message || `You can set up ${integrationName} integration in your settings.`}`
+        };
+      }
+    }
+
+    // Prepare reminder request
+    const reminderRequest: CreateReminderRequest = {
+      title: args.title,
+      description: args.description,
+      scheduled_at: args.scheduled_at,
+      timezone: args.timezone || 'UTC',
+      task_type: args.task_type,
+      recurrence_rule: args.recurrence_rule,
+      recurrence_end_date: args.recurrence_end_date,
+      action_type: args.action_type,
+      integration_slug: args.integration_slug,
+      action_config: args.action_config || {},
+      priority: args.priority || 'medium',
+      tags: args.tags || []
+    };
+
+    // Create the reminder using the existing service
+    const reminderService = createReminderService(supabase);
+    const result = await reminderService.createReminder(userId, reminderRequest);
+
+    if (result.error) {
+      console.error(`[ENCRYPTED-CHAT-${requestId}] ❌ Reminder creation failed:`, result.error);
+      return {
+        success: false,
+        content: `❌ Failed to create reminder: ${result.error}`
+      };
+    }
+
+    if (!result.task) {
+      return {
+        success: false,
+        content: "❌ Failed to create reminder. Please try again."
+      };
+    }
+
+    // Format success response
+    const task = result.task;
+    const scheduledTime = new Date(task.scheduled_at).toLocaleString();
+    let successMessage = `✅ **Reminder Created Successfully!**\n\n`;
+    successMessage += `📋 **Title:** ${task.title}\n`;
+    if (task.description) {
+      successMessage += `📝 **Description:** ${task.description}\n`;
+    }
+    successMessage += `⏰ **Scheduled:** ${scheduledTime}\n`;
+    successMessage += `🏷️ **Type:** ${task.task_type}\n`;
+    
+    if (task.task_type === 'action' && task.action_type) {
+      successMessage += `⚡ **Action:** ${task.action_type}\n`;
+    }
+    
+    if (task.task_type === 'recurring' && task.recurrence_rule) {
+      successMessage += `🔄 **Recurrence:** ${task.recurrence_rule}\n`;
+    }
+    
+    successMessage += `🎯 **Priority:** ${task.priority}\n`;
+    
+    if (task.tags && task.tags.length > 0) {
+      successMessage += `🏷️ **Tags:** ${task.tags.join(', ')}\n`;
+    }
+
+    successMessage += `\n💡 You can view and manage all your reminders in the Reminders section.`;
+
+    return {
+      success: true,
+      content: successMessage
+    };
+
+  } catch (error) {
+    console.error(`[ENCRYPTED-CHAT-${requestId}] ❌ Unexpected error in createReminderFromAI:`, error);
+    return {
+      success: false,
+      content: "❌ An unexpected error occurred while creating the reminder. Please try again."
+    };
   }
 }

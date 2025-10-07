@@ -13,9 +13,11 @@ export default function RootLayout({
   return (
     <SidebarProvider>
       <AppSidebar variant="inset" />
-      <SidebarInset>
+      <SidebarInset className="h-svh md:peer-data-[variant=inset]:h-[calc(100svh-(--spacing(4)))] overflow-hidden">
         <SiteHeader />
-        {children}
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

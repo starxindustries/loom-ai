@@ -4,6 +4,7 @@ import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import Image from "next/image";
+import { toast } from "sonner";
 
 // --- Utility Function & Radix Primitives (Unchanged) ---
 type ClassValue = string | number | boolean | null | undefined;
@@ -317,34 +318,21 @@ const MicIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const toolsList = [
   {
     id: "createImage",
-    name: "Create an image",
+    name: "Create an image from memory.",
     shortName: "Image",
     icon: PaintBrushIcon,
   },
   {
     id: "searchWeb",
-    name: "Search the web",
+    name: "Search the web for the same memory people experienced.",
     shortName: "Search",
     icon: GlobeIcon,
   },
   {
-    id: "writeCode",
-    name: "Write or code",
-    shortName: "Write",
-    icon: PencilIcon,
-  },
-  {
     id: "deepResearch",
-    name: "Run deep research",
+    name: "Run deep research on this memory.",
     shortName: "Deep Search",
     icon: TelescopeIcon,
-    extra: "5 left",
-  },
-  {
-    id: "thinkLonger",
-    name: "Think for longer",
-    shortName: "Think",
-    icon: LightbulbIcon,
   },
 ];
 
@@ -377,14 +365,85 @@ export const PromptBox = React.forwardRef<
   const handlePlusClick = () => {
     fileInputRef.current?.click();
   };
+  const base64FromArrayBuffer = (ab: ArrayBuffer) =>
+    btoa(String.fromCharCode(...new Uint8Array(ab)));
+
+  const encryptAndUploadFile = async (file: File) => {
+    // Encrypt client-side and upload to /api/encrypted-files
+    // Then prefill the textarea with a helpful message so user can submit
+    try {
+      // Get encryption profile
+      const profRes = await fetch('/api/user-encryption-profile');
+      if (!profRes.ok) throw new Error('No encryption profile');
+      const { profile } = await profRes.json();
+
+      const passphrase = typeof window !== 'undefined' ? localStorage.getItem('loom_ai_passphrase') : null;
+      if (!passphrase) throw new Error('No encryption key on this device');
+
+      // Derive KEK
+      const passKey = await crypto.subtle.importKey('raw', new TextEncoder().encode(passphrase), 'PBKDF2', false, ['deriveKey']);
+      const salt = Uint8Array.from(atob(profile.master_salt), c => c.charCodeAt(0));
+      const kek = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+        passKey,
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['wrapKey', 'unwrapKey', 'encrypt', 'decrypt']
+      );
+
+      // DEK + encrypt bytes
+      const dek = await crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+      const buf = await file.arrayBuffer();
+      const dataIv = crypto.getRandomValues(new Uint8Array(12));
+      const ciphertext = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: dataIv }, dek, buf);
+
+      // Wrap DEK
+      const dekIv = crypto.getRandomValues(new Uint8Array(12));
+      const wrappedDek = await crypto.subtle.wrapKey('raw', dek, kek, { name: 'AES-GCM', iv: dekIv });
+
+      // POST
+      const form = new FormData();
+      form.append('file', file);
+      form.append('payload', base64FromArrayBuffer(ciphertext));
+      form.append('encryption', JSON.stringify({
+        wrapped_dek: base64FromArrayBuffer(wrappedDek as ArrayBuffer),
+        dek_salt: profile.master_salt,
+        dek_iv: base64FromArrayBuffer(dekIv.buffer),
+        data_iv: base64FromArrayBuffer(dataIv.buffer),
+        kdf_algorithm: 'pbkdf2',
+        kdf_iterations: 100000,
+        encryption_algorithm: 'aes-256-gcm'
+      }));
+
+      // Hints from filename
+      const hints: string[] = [];
+      const lower = file.name.toLowerCase();
+      if (lower.includes('license') || lower.includes('licence')) hints.push('driving licence', 'license');
+      if (hints.length) form.append('keyword_hints', hints.join(','));
+
+      const resp = await fetch('/api/encrypted-files', { method: 'POST', body: form });
+      if (!resp.ok) throw new Error('Upload failed');
+
+      // Prefill user message so the AI is notified on send
+      setValue(prev => prev && prev.length > 0 ? prev : `Store my file: ${file.name}. This is important and should be available later.`);
+    } catch (e) {
+      // Fall back to image preview if encryption failed, so UX still works for images
+      try {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        }
+      } catch { }
+    }
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (file) {
+      void encryptAndUploadFile(file);
     }
     event.target.value = "";
   };
@@ -404,7 +463,7 @@ export const PromptBox = React.forwardRef<
   return (
     <div
       className={cn(
-        "flex flex-col rounded-[28px] p-2 shadow-lg transition-colors bg-white border dark:bg-[#303030] dark:border-transparent cursor-text",
+        "flex flex-col rounded-[28px] p-2 shadow-lg transition-colors border bg-background dark:bg-[#303030] dark:border-transparent cursor-text",
         className
       )}
     >
@@ -505,23 +564,27 @@ export const PromptBox = React.forwardRef<
                 </TooltipContent>
               </Tooltip>
               <PopoverContent side="top" align="start">
+                <div className="text-sm text-muted-foreground dark:text-gray-400 p-2 text-center border-b border-border">
+                  Tools are coming soon
+                </div>
                 <div className="flex flex-col gap-1">
                   {toolsList.map((tool) => (
                     <button
                       key={tool.id}
                       onClick={() => {
-                        setSelectedTool(tool.id);
-                        setIsPopoverOpen(false);
+                        toast("Tools are coming soon");
+                        // setSelectedTool(tool.id);
+                        // setIsPopoverOpen(false);
                       }}
                       className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent dark:hover:bg-[#515151]"
                     >
                       {" "}
-                      <tool.icon className="h-4 w-4" /> <span>{tool.name}</span>{" "}
-                      {tool.extra && (
+                      <tool.icon className="h-6 w-6" /> <span>{tool.name}</span>{" "}
+                      {/* {tool.extra && (
                         <span className="ml-auto text-xs text-muted-foreground dark:text-gray-400">
                           {tool.extra}
                         </span>
-                      )}{" "}
+                      )}{" "} */}
                     </button>
                   ))}
                 </div>

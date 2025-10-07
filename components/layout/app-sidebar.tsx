@@ -11,11 +11,12 @@ import {
   PaperclipIcon,
   AlertCircleIcon,
   ZapIcon,
+  ArrowUp01Icon,
 } from "lucide-react";
 
 import { CommingSoon } from "./nav-documents";
 import { NavMain } from "./nav-main";
-import { NavSecondary } from "./nav-secondary";
+import { motion } from "framer-motion";
 import { NavUser } from "./nav-user";
 import {
   Sidebar,
@@ -29,6 +30,7 @@ import {
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 const data = {
   navMain: [
@@ -39,84 +41,27 @@ const data = {
     },
     {
       title: "Files",
-      url: "#",
+      url: "/protected/files",
       icon: PaperclipIcon,
     },
     {
       title: "Analytics",
-      url: "#",
+      url: "/protected/analytics",
       icon: BarChartIcon,
     },
-  ],
-  navClouds: [
     {
-      title: "Capture",
-      icon: CameraIcon,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: FileTextIcon,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: FileCodeIcon,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: SettingsIcon,
-    },
-  ],
-  commingSoon: [
-    {
-      name: "Automations",
-      url: "#",
+      title: "Automations",
+      url: "/protected/automations",
       icon: ZapIcon,
     },
     {
-      name: "Reminder",
-      url: "#",
+      title: "Reminder",
+      url: "/protected/remainder",
       icon: AlertCircleIcon,
     },
     {
-      name: "Projects",
-      url: "#",
+      title: "Projects",
+      url: "/protected/projects",
       icon: FolderIcon,
     },
   ],
@@ -177,20 +122,40 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 asChild
                 className="data-[slot=sidebar-menu-button]:p-1.5! hover:bg-transparent hover:text-default"
               >
-                <Link href="/protected">
-                  <span className="text-base text-[25px] font-bold ">
-                    Loom AI
-                  </span>
+                {/* make the logo black and white */}
+                <Link href="/protected" className="flex items-center gap-2 h-full group">
+                  <motion.div
+                    initial={false}
+                    whileHover={{ rotate: 360 }}
+                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                  >
+                    <Image
+                      src="/assests/logo/logo.png"
+                      alt="logo"
+                      width={40}
+                      height={40}
+                      className="grayscale invert"
+                      quality={100}
+                      priority
+                      unoptimized
+                    />
+                  </motion.div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-bold">
+                      Loom AI
+                    </span>
+                    <p className="text-[10px] text-muted-foreground">End to End Encrypted.</p>
+                  </div>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
-        <SidebarContent className=" flex-1">
+        <SidebarContent className=" flex-1 gap-0 p-0 m-0">
           <NavMain items={data.navMain} />
-          <CommingSoon items={data.commingSoon} />
+          {/* <CommingSoon items={data.commingSoon} /> */}
         </SidebarContent>
-        <NavSecondary items={data.navSecondary} />
+        {/* <NavSecondary items={data.navSecondary} /> */}
         <SidebarFooter>
           <NavUser user={userInfo} />
         </SidebarFooter>

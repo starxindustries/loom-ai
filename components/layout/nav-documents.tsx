@@ -4,6 +4,7 @@ import {
   ShareIcon,
   type LucideIcon,
 } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import {
   DropdownMenu,
@@ -32,44 +33,26 @@ export function CommingSoon({
   }[];
 }) {
   const { isMobile } = useSidebar();
+  const pathname = usePathname();
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Comming Soon</SidebarGroupLabel>
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden pt-0">
+      {/* <SidebarGroupLabel>Comming Soon</SidebarGroupLabel> */}
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.name} className="cursor-pointer">
-            <SidebarMenuButton asChild>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={item.name}
+                  className={`cursor-pointer ${
+                    pathname === item.url ? 'bg-primary text-secondary hover:bg-primary hover:text-secondary' : ''
+                  }`}
+                >
               <Link href={item.url}>
                 <item.icon />
                 <span>{item.name}</span>
               </Link>
             </SidebarMenuButton>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuAction
-                  showOnHover
-                  className="rounded-sm data-[state=open]:bg-accent"
-                >
-                  <MoreHorizontalIcon />
-                  <span className="sr-only">More</span>
-                </SidebarMenuAction>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="w-24 rounded-lg"
-                side={isMobile ? "bottom" : "right"}
-                align={isMobile ? "end" : "start"}
-              >
-                <DropdownMenuItem>
-                  <FolderIcon />
-                  <span>Open</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ShareIcon />
-                  <span>Share</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </SidebarMenuItem>
         ))}
       </SidebarMenu>

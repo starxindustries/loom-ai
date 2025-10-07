@@ -1,6 +1,6 @@
 -- =====================================================
 -- Generated DDL for Database: postgres
--- Generated on: 2025-09-23 17:23:33.844809+00
+-- Generated on: 2025-10-03 08:19:41.804821+00
 -- =====================================================
 
 -- Tables
@@ -195,6 +195,29 @@ CREATE TABLE auth.users (
   deleted_at TIMESTAMPTZ,
   is_anonymous BOOLEAN NOT NULL DEFAULT false
 );
+CREATE TABLE cron.job (
+  jobid BIGINT NOT NULL DEFAULT nextval('cron.jobid_seq'::regclass),
+  schedule TEXT NOT NULL,
+  command TEXT NOT NULL,
+  nodename TEXT NOT NULL DEFAULT 'localhost'::text,
+  nodeport INTEGER NOT NULL DEFAULT inet_server_port(),
+  database TEXT NOT NULL DEFAULT current_database(),
+  username TEXT NOT NULL DEFAULT CURRENT_USER,
+  active BOOLEAN NOT NULL DEFAULT true,
+  jobname TEXT
+);
+CREATE TABLE cron.job_run_details (
+  jobid BIGINT,
+  runid BIGINT NOT NULL DEFAULT nextval('cron.runid_seq'::regclass),
+  job_pid INTEGER,
+  database TEXT,
+  username TEXT,
+  command TEXT,
+  status TEXT,
+  return_message TEXT,
+  start_time TIMESTAMPTZ,
+  end_time TIMESTAMPTZ
+);
 CREATE TABLE public.encrypted_memories (
   id UUID NOT NULL DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
@@ -215,6 +238,27 @@ CREATE TABLE public.encrypted_memories (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
+CREATE TABLE public.encrypted_user_files (
+  id UUID NOT NULL DEFAULT extensions.gen_random_uuid(),
+  user_id UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  original_name VARCHAR(255) NOT NULL,
+  content_type VARCHAR(255) NOT NULL,
+  file_size BIGINT NOT NULL,
+  storage_bucket TEXT NOT NULL DEFAULT 'user-files'::text,
+  storage_path TEXT NOT NULL,
+  wrapped_dek TEXT NOT NULL,
+  dek_salt TEXT NOT NULL,
+  dek_iv TEXT NOT NULL,
+  data_iv TEXT NOT NULL,
+  kdf_algorithm TEXT NOT NULL DEFAULT 'pbkdf2'::text,
+  kdf_iterations INTEGER NOT NULL DEFAULT 100000,
+  encryption_algorithm TEXT NOT NULL DEFAULT 'aes-256-gcm'::text,
+  keyword_hints ARRAY,
+  description TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 CREATE TABLE public.error_logs (
   id VARCHAR(255) NOT NULL,
   type VARCHAR(100) NOT NULL,
@@ -228,6 +272,78 @@ CREATE TABLE public.error_logs (
   resolved_by VARCHAR(255),
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE TABLE public.integration_providers (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(50) NOT NULL,
+  description TEXT,
+  auth_type VARCHAR(50) NOT NULL,
+  oauth_authorize_url TEXT,
+  oauth_token_url TEXT,
+  oauth_scopes ARRAY,
+  requires_api_key BOOLEAN DEFAULT false,
+  logo_url TEXT,
+  documentation_url TEXT,
+  is_active BOOLEAN DEFAULT true,
+  supported_actions ARRAY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE public.reminder_templates (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  user_id UUID,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(100),
+  title_template TEXT NOT NULL,
+  description_template TEXT,
+  default_action_type VARCHAR(100),
+  default_action_config JSONB DEFAULT '{}'::jsonb,
+  default_reminder_offset INTERVAL,
+  is_system_template BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  usage_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE public.scheduled_tasks (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  task_type VARCHAR(50) NOT NULL,
+  scheduled_at TIMESTAMPTZ NOT NULL,
+  timezone VARCHAR(100) DEFAULT 'UTC'::character varying,
+  recurrence_rule TEXT,
+  recurrence_end_date TIMESTAMPTZ,
+  action_type VARCHAR(100),
+  integration_id UUID,
+  action_config JSONB DEFAULT '{}'::jsonb,
+  encrypted_payload TEXT,
+  wrapped_dek TEXT,
+  dek_salt TEXT,
+  dek_iv TEXT,
+  data_iv TEXT,
+  kdf_algorithm TEXT DEFAULT 'pbkdf2'::text,
+  kdf_iterations INTEGER DEFAULT 100000,
+  encryption_algorithm TEXT DEFAULT 'aes-256-gcm'::text,
+  status VARCHAR(50) NOT NULL DEFAULT 'pending'::character varying,
+  last_executed_at TIMESTAMPTZ,
+  next_execution_at TIMESTAMPTZ,
+  execution_count INTEGER DEFAULT 0,
+  max_executions INTEGER,
+  cron_job_id BIGINT,
+  cron_schedule TEXT,
+  priority VARCHAR(20) DEFAULT 'medium'::character varying,
+  tags ARRAY,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  retry_count INTEGER DEFAULT 0,
+  max_retries INTEGER DEFAULT 3,
+  last_error TEXT,
+  failed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE TABLE public.subscription_plans (
   id UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -251,6 +367,19 @@ CREATE TABLE public.system_logs (
   tags ARRAY DEFAULT '{}'::text[],
   created_at TIMESTAMPTZ DEFAULT now()
 );
+CREATE TABLE public.task_execution_logs (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  task_id UUID NOT NULL,
+  user_id UUID NOT NULL,
+  executed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  status VARCHAR(50) NOT NULL,
+  result_data JSONB DEFAULT '{}'::jsonb,
+  error_message TEXT,
+  error_code VARCHAR(100),
+  execution_duration_ms INTEGER,
+  integration_response JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 CREATE TABLE public.usage_tracking (
   id UUID NOT NULL DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL,
@@ -273,6 +402,32 @@ CREATE TABLE public.user_encryption_profiles (
   updated_at TIMESTAMPTZ DEFAULT now(),
   last_passphrase_change TIMESTAMPTZ DEFAULT now(),
   is_new BOOLEAN NOT NULL DEFAULT true
+);
+CREATE TABLE public.user_integrations (
+  id UUID NOT NULL DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  provider_id UUID NOT NULL,
+  connection_name VARCHAR(255),
+  encrypted_access_token TEXT,
+  encrypted_refresh_token TEXT,
+  encrypted_api_key TEXT,
+  token_expires_at TIMESTAMPTZ,
+  wrapped_dek TEXT NOT NULL,
+  dek_salt TEXT NOT NULL,
+  dek_iv TEXT NOT NULL,
+  data_iv TEXT NOT NULL,
+  kdf_algorithm TEXT NOT NULL DEFAULT 'pbkdf2'::text,
+  kdf_iterations INTEGER NOT NULL DEFAULT 100000,
+  encryption_algorithm TEXT NOT NULL DEFAULT 'aes-256-gcm'::text,
+  scopes_granted ARRAY,
+  additional_config JSONB DEFAULT '{}'::jsonb,
+  is_active BOOLEAN DEFAULT true,
+  last_used_at TIMESTAMPTZ,
+  last_sync_at TIMESTAMPTZ,
+  error_count INTEGER DEFAULT 0,
+  last_error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE TABLE public.user_notifications (
   id UUID NOT NULL DEFAULT gen_random_uuid(),
@@ -465,15 +620,28 @@ CREATE INDEX users_instance_id_email_idx ON auth.users USING btree (instance_id,
 CREATE INDEX users_instance_id_idx ON auth.users USING btree (instance_id);
 CREATE INDEX users_is_anonymous_idx ON auth.users USING btree (is_anonymous);
 CREATE UNIQUE INDEX users_phone_key ON auth.users USING btree (phone);
+CREATE UNIQUE INDEX jobname_username_uniq ON cron.job USING btree (jobname, username);
 CREATE INDEX encrypted_memories_created_at_idx ON public.encrypted_memories USING btree (created_at DESC);
 CREATE INDEX encrypted_memories_keywords_idx ON public.encrypted_memories USING gin (encrypted_keywords);
 CREATE INDEX encrypted_memories_user_id_idx ON public.encrypted_memories USING btree (user_id);
+CREATE INDEX encrypted_user_files_bucket_path_idx ON public.encrypted_user_files USING btree (storage_bucket, storage_path);
+CREATE INDEX encrypted_user_files_created_at_idx ON public.encrypted_user_files USING btree (created_at DESC);
+CREATE INDEX encrypted_user_files_user_id_idx ON public.encrypted_user_files USING btree (user_id);
 CREATE INDEX idx_error_logs_created_at ON public.error_logs USING btree (created_at DESC);
 CREATE INDEX idx_error_logs_resolved ON public.error_logs USING btree (resolved);
 CREATE INDEX idx_error_logs_severity ON public.error_logs USING btree (severity);
 CREATE INDEX idx_error_logs_subscription_id ON public.error_logs USING btree (((context ->> 'subscriptionId'::text)));
 CREATE INDEX idx_error_logs_type ON public.error_logs USING btree (type);
 CREATE INDEX idx_error_logs_user_id ON public.error_logs USING btree (((context ->> 'userId'::text)));
+CREATE INDEX idx_reminder_templates_category ON public.reminder_templates USING btree (category);
+CREATE INDEX idx_reminder_templates_user_id ON public.reminder_templates USING btree (user_id);
+CREATE INDEX idx_scheduled_tasks_integration ON public.scheduled_tasks USING btree (integration_id) WHERE (integration_id IS NOT NULL);
+CREATE INDEX idx_scheduled_tasks_next_execution ON public.scheduled_tasks USING btree (next_execution_at) WHERE ((status)::text = ANY ((ARRAY['pending'::character varying, 'active'::character varying])::text[]));
+CREATE INDEX idx_scheduled_tasks_scheduled_at ON public.scheduled_tasks USING btree (scheduled_at);
+CREATE INDEX idx_scheduled_tasks_status ON public.scheduled_tasks USING btree (status);
+CREATE INDEX idx_scheduled_tasks_tags ON public.scheduled_tasks USING gin (tags);
+CREATE INDEX idx_scheduled_tasks_user_id ON public.scheduled_tasks USING btree (user_id);
+CREATE INDEX idx_scheduled_tasks_user_status ON public.scheduled_tasks USING btree (user_id, status);
 CREATE INDEX idx_system_logs_category ON public.system_logs USING btree (category);
 CREATE INDEX idx_system_logs_created_at ON public.system_logs USING btree (created_at DESC);
 CREATE INDEX idx_system_logs_level ON public.system_logs USING btree (level);
@@ -481,8 +649,15 @@ CREATE INDEX idx_system_logs_operation ON public.system_logs USING btree (((cont
 CREATE INDEX idx_system_logs_source ON public.system_logs USING btree (source);
 CREATE INDEX idx_system_logs_subscription_id ON public.system_logs USING btree (((context ->> 'subscriptionId'::text)));
 CREATE INDEX idx_system_logs_user_id ON public.system_logs USING btree (((context ->> 'userId'::text)));
+CREATE INDEX idx_task_execution_logs_executed_at ON public.task_execution_logs USING btree (executed_at DESC);
+CREATE INDEX idx_task_execution_logs_status ON public.task_execution_logs USING btree (status);
+CREATE INDEX idx_task_execution_logs_task_id ON public.task_execution_logs USING btree (task_id);
+CREATE INDEX idx_task_execution_logs_user_id ON public.task_execution_logs USING btree (user_id);
 CREATE INDEX idx_usage_tracking_last_reset ON public.usage_tracking USING btree (last_reset_at);
 CREATE INDEX idx_usage_tracking_user_id ON public.usage_tracking USING btree (user_id);
+CREATE INDEX idx_user_integrations_active ON public.user_integrations USING btree (user_id, is_active);
+CREATE INDEX idx_user_integrations_provider_id ON public.user_integrations USING btree (provider_id);
+CREATE INDEX idx_user_integrations_user_id ON public.user_integrations USING btree (user_id);
 CREATE INDEX idx_user_notifications_created_at ON public.user_notifications USING btree (created_at);
 CREATE INDEX idx_user_notifications_priority ON public.user_notifications USING btree (priority);
 CREATE INDEX idx_user_notifications_read ON public.user_notifications USING btree (read);
@@ -492,6 +667,8 @@ CREATE INDEX idx_user_notifications_user_unread ON public.user_notifications USI
 CREATE INDEX idx_user_subscriptions_plan_id ON public.user_subscriptions USING btree (plan_id);
 CREATE INDEX idx_user_subscriptions_status ON public.user_subscriptions USING btree (status);
 CREATE INDEX idx_user_subscriptions_user_id ON public.user_subscriptions USING btree (user_id);
+CREATE UNIQUE INDEX integration_providers_name_key ON public.integration_providers USING btree (name);
+CREATE UNIQUE INDEX integration_providers_slug_key ON public.integration_providers USING btree (slug);
 CREATE INDEX subscription_plans_active_idx ON public.subscription_plans USING btree (is_active) WHERE (is_active = true);
 CREATE INDEX subscription_plans_lemonsqueezy_variant_idx ON public.subscription_plans USING btree (lemonsqueezy_variant_id) WHERE (lemonsqueezy_variant_id IS NOT NULL);
 CREATE INDEX subscription_plans_slug_idx ON public.subscription_plans USING btree (slug);
@@ -499,6 +676,7 @@ CREATE UNIQUE INDEX subscription_plans_slug_key ON public.subscription_plans USI
 CREATE UNIQUE INDEX unique_user_usage ON public.usage_tracking USING btree (user_id);
 CREATE INDEX usage_tracking_last_reset_idx ON public.usage_tracking USING btree (last_reset_at);
 CREATE INDEX usage_tracking_user_id_idx ON public.usage_tracking USING btree (user_id);
+CREATE UNIQUE INDEX user_integrations_user_id_provider_id_connection_name_key ON public.user_integrations USING btree (user_id, provider_id, connection_name);
 CREATE INDEX user_subscriptions_active_idx ON public.user_subscriptions USING btree (user_id, status) WHERE ((status)::text = 'active'::text);
 CREATE INDEX user_subscriptions_lemonsqueezy_id_idx ON public.user_subscriptions USING btree (lemonsqueezy_subscription_id) WHERE (lemonsqueezy_subscription_id IS NOT NULL);
 CREATE UNIQUE INDEX user_subscriptions_lemonsqueezy_subscription_id_key ON public.user_subscriptions USING btree (lemonsqueezy_subscription_id);
@@ -515,6 +693,7 @@ CREATE INDEX webhook_events_processed_idx ON public.webhook_events USING btree (
 CREATE INDEX webhook_events_retry_idx ON public.webhook_events USING btree (processed, retry_count) WHERE ((processed = false) AND (retry_count < 5));
 CREATE INDEX webhook_events_type_processed_created_idx ON public.webhook_events USING btree (event_type, processed, created_at DESC);
 CREATE INDEX ix_realtime_subscription_entity ON realtime.subscription USING btree (entity);
+CREATE INDEX messages_inserted_at_topic_index ON ONLY realtime.messages USING btree (inserted_at DESC, topic) WHERE ((extension = 'broadcast'::text) AND (private IS TRUE));
 CREATE UNIQUE INDEX pk_subscription ON realtime.subscription USING btree (id);
 CREATE UNIQUE INDEX subscription_subscription_id_entity_filters_key ON realtime.subscription USING btree (subscription_id, entity, filters);
 CREATE UNIQUE INDEX bname ON storage.buckets USING btree (name);
@@ -530,62 +709,112 @@ CREATE UNIQUE INDEX objects_bucket_id_level_idx ON storage.objects USING btree (
 CREATE UNIQUE INDEX secrets_name_idx ON vault.secrets USING btree (name) WHERE (name IS NOT NULL);
 
 -- Row Level Security
+ALTER TABLE cron.job ENABLE ROW LEVEL SECURITY;
+CREATE POLICY cron_job_policy ON cron.job FOR ALL TO public USING ((username = CURRENT_USER));
+ALTER TABLE cron.job_run_details ENABLE ROW LEVEL SECURITY;
+CREATE POLICY cron_job_run_details_policy ON cron.job_run_details FOR ALL TO public USING ((username = CURRENT_USER));
+ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can select their own encrypted memories ON public.encrypted_memories FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can insert their own encrypted memories ON public.encrypted_memories FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Users can delete their own encrypted memories ON public.encrypted_memories FOR DELETE TO public USING ((auth.uid() = user_id));
-ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can update their own encrypted memories ON public.encrypted_memories FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.encrypted_memories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Users can select their own encrypted memories ON public.encrypted_memories FOR SELECT TO public USING ((auth.uid() = user_id));
+CREATE POLICY Users can delete their own encrypted memories ON public.encrypted_memories FOR DELETE TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.encrypted_user_files ENABLE ROW LEVEL SECURITY;
+CREATE POLICY encrypted_user_files_update_own ON public.encrypted_user_files FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.encrypted_user_files ENABLE ROW LEVEL SECURITY;
+CREATE POLICY encrypted_user_files_delete_own ON public.encrypted_user_files FOR DELETE TO authenticated USING ((auth.uid() = user_id));
+ALTER TABLE public.encrypted_user_files ENABLE ROW LEVEL SECURITY;
+CREATE POLICY encrypted_user_files_insert_own ON public.encrypted_user_files FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.encrypted_user_files ENABLE ROW LEVEL SECURITY;
+CREATE POLICY encrypted_user_files_select_own ON public.encrypted_user_files FOR SELECT TO authenticated USING ((auth.uid() = user_id));
 ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY System can insert error logs ON public.error_logs FOR INSERT TO public WITH CHECK (true);
+CREATE POLICY error_logs_admin_read ON public.error_logs FOR SELECT TO authenticated USING ((auth.role() = 'admin'::text));
 ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY error_logs_admin_update ON public.error_logs FOR UPDATE TO authenticated USING ((auth.role() = 'admin'::text)) WITH CHECK ((auth.role() = 'admin'::text));
 ALTER TABLE public.error_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY error_logs_admin_read ON public.error_logs FOR SELECT TO authenticated USING ((auth.role() = 'admin'::text));
+CREATE POLICY System can insert error logs ON public.error_logs FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.integration_providers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Integration providers are viewable by authenticated users ON public.integration_providers FOR SELECT TO authenticated USING ((is_active = true));
+ALTER TABLE public.reminder_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can delete their own templates ON public.reminder_templates FOR DELETE TO authenticated USING (((auth.uid() = user_id) AND (is_system_template = false)));
+ALTER TABLE public.reminder_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can view system and own templates ON public.reminder_templates FOR SELECT TO authenticated USING (((is_system_template = true) OR (auth.uid() = user_id)));
+ALTER TABLE public.reminder_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can create their own templates ON public.reminder_templates FOR INSERT TO authenticated WITH CHECK (((auth.uid() = user_id) AND (is_system_template = false)));
+ALTER TABLE public.reminder_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update their own templates ON public.reminder_templates FOR UPDATE TO authenticated USING (((auth.uid() = user_id) AND (is_system_template = false))) WITH CHECK (((auth.uid() = user_id) AND (is_system_template = false)));
+ALTER TABLE public.scheduled_tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update their own tasks ON public.scheduled_tasks FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.scheduled_tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can delete their own tasks ON public.scheduled_tasks FOR DELETE TO authenticated USING ((auth.uid() = user_id));
+ALTER TABLE public.scheduled_tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can view their own tasks ON public.scheduled_tasks FOR SELECT TO authenticated USING ((auth.uid() = user_id));
+ALTER TABLE public.scheduled_tasks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can create their own tasks ON public.scheduled_tasks FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
 CREATE POLICY subscription_plans_public_read ON public.subscription_plans FOR SELECT TO public USING ((is_active = true));
 ALTER TABLE public.subscription_plans ENABLE ROW LEVEL SECURITY;
 CREATE POLICY subscription_plans_admin_all ON public.subscription_plans FOR ALL TO authenticated USING ((auth.role() = 'admin'::text)) WITH CHECK ((auth.role() = 'admin'::text));
 ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY system_logs_admin_read ON public.system_logs FOR SELECT TO authenticated USING ((auth.role() = 'admin'::text));
-ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY System can insert logs ON public.system_logs FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.system_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY system_logs_admin_read ON public.system_logs FOR SELECT TO authenticated USING ((auth.role() = 'admin'::text));
+ALTER TABLE public.task_execution_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can view their own execution logs ON public.task_execution_logs FOR SELECT TO authenticated USING ((auth.uid() = user_id));
+ALTER TABLE public.task_execution_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY System can insert execution logs ON public.task_execution_logs FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
-CREATE POLICY usage_tracking_own_read ON public.usage_tracking FOR SELECT TO public USING ((auth.uid() = user_id));
-ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
-CREATE POLICY usage_tracking_own_update ON public.usage_tracking FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+CREATE POLICY usage_tracking_auto_insert ON public.usage_tracking FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
 CREATE POLICY usage_tracking_service_all ON public.usage_tracking FOR ALL TO public USING (((auth.jwt() ->> 'role'::text) = 'service_role'::text));
 ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
-CREATE POLICY usage_tracking_auto_insert ON public.usage_tracking FOR INSERT TO public WITH CHECK ((auth.uid() = user_id));
-ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Users can delete their own encryption profile ON public.user_encryption_profiles FOR DELETE TO public USING ((auth.uid() = user_id));
-ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY Users can update their own encryption profile ON public.user_encryption_profiles FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+CREATE POLICY usage_tracking_own_update ON public.usage_tracking FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.usage_tracking ENABLE ROW LEVEL SECURITY;
+CREATE POLICY usage_tracking_own_read ON public.usage_tracking FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can create their own encryption profile ON public.user_encryption_profiles FOR INSERT TO public WITH CHECK (((auth.uid() = user_id) OR (auth.uid() IS NULL)));
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update their own encryption profile ON public.user_encryption_profiles FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
 ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can read their own encryption profile ON public.user_encryption_profiles FOR SELECT TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Service role can manage encryption profiles ON public.user_encryption_profiles FOR ALL TO public USING ((current_setting('role'::text) = 'service_role'::text)) WITH CHECK ((current_setting('role'::text) = 'service_role'::text));
-ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY System can insert notifications ON public.user_notifications FOR INSERT TO public WITH CHECK (true);
+ALTER TABLE public.user_encryption_profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can delete their own encryption profile ON public.user_encryption_profiles FOR DELETE TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_integrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can delete their own integrations ON public.user_integrations FOR DELETE TO authenticated USING ((auth.uid() = user_id));
+ALTER TABLE public.user_integrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update their own integrations ON public.user_integrations FOR UPDATE TO authenticated USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.user_integrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can create their own integrations ON public.user_integrations FOR INSERT TO authenticated WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.user_integrations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can view their own integrations ON public.user_integrations FOR SELECT TO authenticated USING ((auth.uid() = user_id));
 ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can update own notifications ON public.user_notifications FOR UPDATE TO public USING ((auth.uid() = user_id));
 ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
 CREATE POLICY Users can view own notifications ON public.user_notifications FOR SELECT TO public USING ((auth.uid() = user_id));
-ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY user_subscriptions_own_update ON public.user_subscriptions FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY System can insert notifications ON public.user_notifications FOR INSERT TO public WITH CHECK (true);
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_subscriptions_service_update ON public.user_subscriptions FOR UPDATE TO public USING ((((auth.jwt() ->> 'role'::text) = 'service_role'::text) OR (auth.uid() = user_id)));
 ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY user_subscriptions_service_insert ON public.user_subscriptions FOR INSERT TO public WITH CHECK (true);
-ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY user_subscriptions_own_read ON public.user_subscriptions FOR SELECT TO public USING ((auth.uid() = user_id));
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_subscriptions_own_update ON public.user_subscriptions FOR UPDATE TO public USING ((auth.uid() = user_id)) WITH CHECK ((auth.uid() = user_id));
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY user_subscriptions_service_insert ON public.user_subscriptions FOR INSERT TO public WITH CHECK (true);
 ALTER TABLE public.webhook_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY webhook_events_service_only ON public.webhook_events FOR ALL TO public USING (((auth.jwt() ->> 'role'::text) = 'service_role'::text));
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can update own files ON storage.objects FOR UPDATE TO authenticated USING (((bucket_id = 'user-files'::text) AND ((auth.uid())::text = (storage.foldername(name))[1]))) WITH CHECK (((bucket_id = 'user-files'::text) AND ((auth.uid())::text = (storage.foldername(name))[1])));
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can view own files ON storage.objects FOR SELECT TO authenticated USING (((bucket_id = 'user-files'::text) AND ((auth.uid())::text = (storage.foldername(name))[1])));
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can upload own files ON storage.objects FOR INSERT TO authenticated WITH CHECK (((bucket_id = 'user-files'::text) AND ((auth.uid())::text = (storage.foldername(name))[1])));
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE POLICY Users can delete own files ON storage.objects FOR DELETE TO authenticated USING (((bucket_id = 'user-files'::text) AND ((auth.uid())::text = (storage.foldername(name))[1])));
 
 -- Functions
 CREATE OR REPLACE FUNCTION auth.email()
@@ -640,14 +869,63 @@ AS $function$
   )::uuid
 
 $function$;
-CREATE OR REPLACE FUNCTION extensions.armor(bytea, text[], text[])
+CREATE OR REPLACE FUNCTION cron.alter_job(bigint, text, text, text, text, boolean)
+RETURNS void
+LANGUAGE c
+VOLATILE
+AS $function$
+cron_alter_job
+$function$;
+CREATE OR REPLACE FUNCTION cron.job_cache_invalidate()
+RETURNS trigger
+LANGUAGE c
+VOLATILE
+AS $function$
+cron_job_cache_invalidate
+$function$;
+CREATE OR REPLACE FUNCTION cron.schedule(text, text, text)
+RETURNS bigint
+LANGUAGE c
+VOLATILE
+AS $function$
+cron_schedule_named
+$function$;
+CREATE OR REPLACE FUNCTION cron.schedule(text, text)
+RETURNS bigint
+LANGUAGE c
+VOLATILE
+AS $function$
+cron_schedule
+$function$;
+CREATE OR REPLACE FUNCTION cron.schedule_in_database(text, text, text, text, text, boolean)
+RETURNS bigint
+LANGUAGE c
+VOLATILE
+AS $function$
+cron_schedule_named
+$function$;
+CREATE OR REPLACE FUNCTION cron.unschedule(bigint)
+RETURNS boolean
+LANGUAGE c
+VOLATILE
+AS $function$
+cron_unschedule
+$function$;
+CREATE OR REPLACE FUNCTION cron.unschedule(text)
+RETURNS boolean
+LANGUAGE c
+VOLATILE
+AS $function$
+cron_unschedule_named
+$function$;
+CREATE OR REPLACE FUNCTION extensions.armor(bytea)
 RETURNS text
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pg_armor
 $function$;
-CREATE OR REPLACE FUNCTION extensions.armor(bytea)
+CREATE OR REPLACE FUNCTION extensions.armor(bytea, text[], text[])
 RETURNS text
 LANGUAGE c
 IMMUTABLE
@@ -682,14 +960,14 @@ IMMUTABLE
 AS $function$
 pg_decrypt_iv
 $function$;
-CREATE OR REPLACE FUNCTION extensions.digest(text, text)
+CREATE OR REPLACE FUNCTION extensions.digest(bytea, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pg_digest
 $function$;
-CREATE OR REPLACE FUNCTION extensions.digest(bytea, text)
+CREATE OR REPLACE FUNCTION extensions.digest(text, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
@@ -724,19 +1002,19 @@ VOLATILE
 AS $function$
 pg_random_uuid
 $function$;
-CREATE OR REPLACE FUNCTION extensions.gen_salt(text, integer)
-RETURNS text
-LANGUAGE c
-VOLATILE
-AS $function$
-pg_gen_salt_rounds
-$function$;
 CREATE OR REPLACE FUNCTION extensions.gen_salt(text)
 RETURNS text
 LANGUAGE c
 VOLATILE
 AS $function$
 pg_gen_salt
+$function$;
+CREATE OR REPLACE FUNCTION extensions.gen_salt(text, integer)
+RETURNS text
+LANGUAGE c
+VOLATILE
+AS $function$
+pg_gen_salt_rounds
 $function$;
 CREATE OR REPLACE FUNCTION extensions.grant_pg_cron_access()
 RETURNS event_trigger
@@ -934,14 +1212,14 @@ IMMUTABLE
 AS $function$
 pgp_pub_decrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text)
 RETURNS text
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pgp_pub_decrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt(bytea, bytea, text)
 RETURNS text
 LANGUAGE c
 IMMUTABLE
@@ -955,14 +1233,14 @@ IMMUTABLE
 AS $function$
 pgp_pub_decrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pgp_pub_decrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_decrypt_bytea(bytea, bytea, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
@@ -983,13 +1261,6 @@ VOLATILE
 AS $function$
 pgp_pub_encrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea, text)
-RETURNS bytea
-LANGUAGE c
-VOLATILE
-AS $function$
-pgp_pub_encrypt_bytea
-$function$;
 CREATE OR REPLACE FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea)
 RETURNS bytea
 LANGUAGE c
@@ -997,12 +1268,12 @@ VOLATILE
 AS $function$
 pgp_pub_encrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text)
-RETURNS text
+CREATE OR REPLACE FUNCTION extensions.pgp_pub_encrypt_bytea(bytea, bytea, text)
+RETURNS bytea
 LANGUAGE c
-IMMUTABLE
+VOLATILE
 AS $function$
-pgp_sym_decrypt_text
+pgp_pub_encrypt_bytea
 $function$;
 CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text, text)
 RETURNS text
@@ -1011,14 +1282,21 @@ IMMUTABLE
 AS $function$
 pgp_sym_decrypt_text
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt(bytea, text)
+RETURNS text
+LANGUAGE c
+IMMUTABLE
+AS $function$
+pgp_sym_decrypt_text
+$function$;
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
 AS $function$
 pgp_sym_decrypt_bytea
 $function$;
-CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text)
+CREATE OR REPLACE FUNCTION extensions.pgp_sym_decrypt_bytea(bytea, text, text)
 RETURNS bytea
 LANGUAGE c
 IMMUTABLE
@@ -1372,13 +1650,6 @@ IMMUTABLE
 AS $function$
 array_to_halfvec
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_halfvec(real[], integer, boolean)
-RETURNS halfvec
-LANGUAGE c
-IMMUTABLE
-AS $function$
-array_to_halfvec
-$function$;
 CREATE OR REPLACE FUNCTION public.array_to_halfvec(double precision[], integer, boolean)
 RETURNS halfvec
 LANGUAGE c
@@ -1386,7 +1657,14 @@ IMMUTABLE
 AS $function$
 array_to_halfvec
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_sparsevec(integer[], integer, boolean)
+CREATE OR REPLACE FUNCTION public.array_to_halfvec(real[], integer, boolean)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_halfvec
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_sparsevec(real[], integer, boolean)
 RETURNS sparsevec
 LANGUAGE c
 IMMUTABLE
@@ -1407,21 +1685,14 @@ IMMUTABLE
 AS $function$
 array_to_sparsevec
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_sparsevec(real[], integer, boolean)
+CREATE OR REPLACE FUNCTION public.array_to_sparsevec(integer[], integer, boolean)
 RETURNS sparsevec
 LANGUAGE c
 IMMUTABLE
 AS $function$
 array_to_sparsevec
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_vector(numeric[], integer, boolean)
-RETURNS vector
-LANGUAGE c
-IMMUTABLE
-AS $function$
-array_to_vector
-$function$;
-CREATE OR REPLACE FUNCTION public.array_to_vector(integer[], integer, boolean)
+CREATE OR REPLACE FUNCTION public.array_to_vector(double precision[], integer, boolean)
 RETURNS vector
 LANGUAGE c
 IMMUTABLE
@@ -1435,7 +1706,14 @@ IMMUTABLE
 AS $function$
 array_to_vector
 $function$;
-CREATE OR REPLACE FUNCTION public.array_to_vector(double precision[], integer, boolean)
+CREATE OR REPLACE FUNCTION public.array_to_vector(integer[], integer, boolean)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+array_to_vector
+$function$;
+CREATE OR REPLACE FUNCTION public.array_to_vector(numeric[], integer, boolean)
 RETURNS vector
 LANGUAGE c
 IMMUTABLE
@@ -1448,7 +1726,20 @@ LANGUAGE plpgsql
 VOLATILE
 AS $function$
 
+DECLARE
+  previous_claims text;
 BEGIN
+  -- Propagate service_role and the new user's id into the session so RLS in downstream triggers is satisfied
+  previous_claims := current_setting('request.jwt.claims', true);
+  PERFORM set_config(
+    'request.jwt.claims',
+    json_build_object(
+      'role', 'service_role',
+      'sub', NEW.id
+    )::text,
+    true
+  );
+
   -- Try to migrate the user to the free plan; warn but do not block user creation on failure
   BEGIN
     PERFORM public.migrate_user_to_free_plan(NEW.id);
@@ -1456,6 +1747,9 @@ BEGIN
     WHEN OTHERS THEN
       RAISE WARNING 'assign_free_subscription_on_signup failed for user %: %', NEW.id, SQLERRM;
   END;
+
+  -- Restore previous claims if there were any
+  PERFORM set_config('request.jwt.claims', COALESCE(previous_claims, ''), true);
 
   RETURN NEW;
 END;
@@ -1539,6 +1833,23 @@ BEGIN
     
     -- Check if user is within limits
     RETURN v_current_count < v_limit;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.cleanup_completed_tasks()
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+  -- Remove cron jobs for completed one-time tasks
+  UPDATE public.scheduled_tasks
+  SET status = 'completed'
+  WHERE status = 'active'
+    AND recurrence_rule IS NULL
+    AND next_execution_at IS NULL
+    AND last_executed_at IS NOT NULL;
 END;
 
 $function$;
@@ -1629,13 +1940,6 @@ BEGIN
 END;
 
 $function$;
-CREATE OR REPLACE FUNCTION public.cosine_distance(halfvec, halfvec)
-RETURNS double precision
-LANGUAGE c
-IMMUTABLE
-AS $function$
-halfvec_cosine_distance
-$function$;
 CREATE OR REPLACE FUNCTION public.cosine_distance(sparsevec, sparsevec)
 RETURNS double precision
 LANGUAGE c
@@ -1649,6 +1953,63 @@ LANGUAGE c
 IMMUTABLE
 AS $function$
 cosine_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.cosine_distance(halfvec, halfvec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_cosine_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.create_cron_job_for_task(uuid)
+RETURNS bigint
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  task_record RECORD;
+  job_id BIGINT;
+  cron_expr TEXT;
+BEGIN
+  -- Get task details
+  SELECT * INTO task_record FROM public.scheduled_tasks WHERE id = task_uuid;
+  
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Task not found: %', task_uuid;
+  END IF;
+  
+  -- Generate cron expression or use existing
+  IF task_record.cron_schedule IS NOT NULL THEN
+    cron_expr := task_record.cron_schedule;
+  ELSE
+    -- For one-time tasks, create a cron that runs once
+    cron_expr := format(
+      '%s %s %s %s *',
+      EXTRACT(MINUTE FROM task_record.scheduled_at),
+      EXTRACT(HOUR FROM task_record.scheduled_at),
+      EXTRACT(DAY FROM task_record.scheduled_at),
+      EXTRACT(MONTH FROM task_record.scheduled_at)
+    );
+  END IF;
+  
+  -- Create the cron job (Note: This requires pg_cron to be properly set up)
+  -- The actual execution logic would be in a separate function
+  SELECT cron.schedule(
+    format('task_%s', task_uuid),
+    cron_expr,
+    format('SELECT public.execute_scheduled_task(%L)', task_uuid)
+  ) INTO job_id;
+  
+  -- Update the task with the cron job ID
+  UPDATE public.scheduled_tasks 
+  SET cron_job_id = job_id,
+      status = 'active'
+  WHERE id = task_uuid;
+  
+  RETURN job_id;
+END;
+
 $function$;
 CREATE OR REPLACE FUNCTION public.ensure_single_active_subscription()
 RETURNS trigger
@@ -1667,6 +2028,58 @@ BEGIN
     END IF;
     
     RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION public.execute_scheduled_task(uuid)
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+  task_record RECORD;
+  execution_log_id UUID;
+BEGIN
+  -- Get task details
+  SELECT * INTO task_record FROM public.scheduled_tasks WHERE id = task_uuid;
+  
+  IF NOT FOUND THEN
+    RAISE NOTICE 'Task not found: %', task_uuid;
+    RETURN;
+  END IF;
+  
+  -- Create execution log entry
+  INSERT INTO public.task_execution_logs (task_id, user_id, status)
+  VALUES (task_uuid, task_record.user_id, 'success')
+  RETURNING id INTO execution_log_id;
+  
+  -- Update task execution metadata
+  UPDATE public.scheduled_tasks
+  SET last_executed_at = now(),
+      execution_count = execution_count + 1,
+      next_execution_at = CASE 
+        WHEN recurrence_rule IS NOT NULL THEN 
+          -- Calculate next execution based on recurrence rule
+          -- This is simplified - you'd need proper RRULE parsing
+          scheduled_at + INTERVAL '1 day'
+        ELSE NULL
+      END,
+      status = CASE
+        WHEN recurrence_rule IS NULL THEN 'completed'
+        ELSE 'active'
+      END
+  WHERE id = task_uuid;
+  
+  -- TODO: Implement actual task execution logic here
+  -- This could involve:
+  -- 1. Decrypting the payload
+  -- 2. Fetching integration credentials
+  -- 3. Calling the appropriate API
+  -- 4. Sending notifications
+  -- 5. Updating execution logs with results
+  
+  RAISE NOTICE 'Task executed: % (Log ID: %)', task_uuid, execution_log_id;
 END;
 
 $function$;
@@ -2230,12 +2643,12 @@ IMMUTABLE
 AS $function$
 jaccard_distance
 $function$;
-CREATE OR REPLACE FUNCTION public.l1_distance(halfvec, halfvec)
+CREATE OR REPLACE FUNCTION public.l1_distance(sparsevec, sparsevec)
 RETURNS double precision
 LANGUAGE c
 IMMUTABLE
 AS $function$
-halfvec_l1_distance
+sparsevec_l1_distance
 $function$;
 CREATE OR REPLACE FUNCTION public.l1_distance(vector, vector)
 RETURNS double precision
@@ -2244,26 +2657,12 @@ IMMUTABLE
 AS $function$
 l1_distance
 $function$;
-CREATE OR REPLACE FUNCTION public.l1_distance(sparsevec, sparsevec)
+CREATE OR REPLACE FUNCTION public.l1_distance(halfvec, halfvec)
 RETURNS double precision
 LANGUAGE c
 IMMUTABLE
 AS $function$
-sparsevec_l1_distance
-$function$;
-CREATE OR REPLACE FUNCTION public.l2_distance(vector, vector)
-RETURNS double precision
-LANGUAGE c
-IMMUTABLE
-AS $function$
-l2_distance
-$function$;
-CREATE OR REPLACE FUNCTION public.l2_distance(sparsevec, sparsevec)
-RETURNS double precision
-LANGUAGE c
-IMMUTABLE
-AS $function$
-sparsevec_l2_distance
+halfvec_l1_distance
 $function$;
 CREATE OR REPLACE FUNCTION public.l2_distance(halfvec, halfvec)
 RETURNS double precision
@@ -2272,12 +2671,19 @@ IMMUTABLE
 AS $function$
 halfvec_l2_distance
 $function$;
-CREATE OR REPLACE FUNCTION public.l2_norm(sparsevec)
+CREATE OR REPLACE FUNCTION public.l2_distance(sparsevec, sparsevec)
 RETURNS double precision
 LANGUAGE c
 IMMUTABLE
 AS $function$
-sparsevec_l2_norm
+sparsevec_l2_distance
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_distance(vector, vector)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+l2_distance
 $function$;
 CREATE OR REPLACE FUNCTION public.l2_norm(halfvec)
 RETURNS double precision
@@ -2285,6 +2691,20 @@ LANGUAGE c
 IMMUTABLE
 AS $function$
 halfvec_l2_norm
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_norm(sparsevec)
+RETURNS double precision
+LANGUAGE c
+IMMUTABLE
+AS $function$
+sparsevec_l2_norm
+$function$;
+CREATE OR REPLACE FUNCTION public.l2_normalize(halfvec)
+RETURNS halfvec
+LANGUAGE c
+IMMUTABLE
+AS $function$
+halfvec_l2_normalize
 $function$;
 CREATE OR REPLACE FUNCTION public.l2_normalize(vector)
 RETURNS vector
@@ -2299,13 +2719,6 @@ LANGUAGE c
 IMMUTABLE
 AS $function$
 sparsevec_l2_normalize
-$function$;
-CREATE OR REPLACE FUNCTION public.l2_normalize(halfvec)
-RETURNS halfvec
-LANGUAGE c
-IMMUTABLE
-AS $function$
-halfvec_l2_normalize
 $function$;
 CREATE OR REPLACE FUNCTION public.log_webhook_processing()
 RETURNS trigger
@@ -2332,27 +2745,41 @@ BEGIN
 END;
 
 $function$;
+CREATE OR REPLACE FUNCTION public.match_memories(uuid, vector, integer, double precision)
+RETURNS record
+LANGUAGE sql
+STABLE
+AS $function$
+
+  select
+    m.id,
+    m.content,
+    1 - (m.embedding <=> query_embedding) as similarity
+  from memories m
+  where m.user_id = p_user_id
+  and 1 - (m.embedding <=> query_embedding) > match_threshold
+  order by m.embedding <=> query_embedding
+  limit match_count;
+
+$function$;
 CREATE OR REPLACE FUNCTION public.match_memories(uuid, vector, double precision, integer)
 RETURNS record
 LANGUAGE plpgsql
 VOLATILE
 AS $function$
-
 BEGIN
   RETURN QUERY
   SELECT 
     m.id,
-    m.content,
     m.created_at,
     (1 - (m.embedding <=> query_embedding)) as similarity
-  FROM memories m
+  FROM encrypted_memories m
   WHERE m.user_id = user_id_param
     AND m.embedding IS NOT NULL
     AND (1 - (m.embedding <=> query_embedding)) > match_threshold
   ORDER BY m.embedding <=> query_embedding
   LIMIT match_count;
 END;
-
 $function$;
 CREATE OR REPLACE FUNCTION public.match_memories(uuid, text, double precision, integer)
 RETURNS record
@@ -2374,23 +2801,6 @@ BEGIN
   ORDER BY m.embedding <=> query_text::vector
   LIMIT match_count;
 END;
-
-$function$;
-CREATE OR REPLACE FUNCTION public.match_memories(uuid, vector, integer, double precision)
-RETURNS record
-LANGUAGE sql
-STABLE
-AS $function$
-
-  select
-    m.id,
-    m.content,
-    1 - (m.embedding <=> query_embedding) as similarity
-  from memories m
-  where m.user_id = p_user_id
-  and 1 - (m.embedding <=> query_embedding) > match_threshold
-  order by m.embedding <=> query_embedding
-  limit match_count;
 
 $function$;
 CREATE OR REPLACE FUNCTION public.match_memories_text(uuid, text, integer)
@@ -2425,68 +2835,36 @@ DECLARE
     user_exists BOOLEAN;
     subscription_exists BOOLEAN;
 BEGIN
-    -- Check if user exists
     SELECT EXISTS(SELECT 1 FROM auth.users WHERE id = p_user_id) INTO user_exists;
-    
     IF NOT user_exists THEN
         RAISE WARNING 'User % does not exist', p_user_id;
         RETURN FALSE;
     END IF;
-    
-    -- Check if user already has a subscription
+
     SELECT EXISTS(SELECT 1 FROM public.user_subscriptions WHERE user_id = p_user_id) INTO subscription_exists;
-    
     IF subscription_exists THEN
         RAISE WARNING 'User % already has a subscription', p_user_id;
         RETURN FALSE;
     END IF;
-    
-    -- Get free plan ID
+
     SELECT id INTO free_plan_id FROM public.subscription_plans WHERE slug = 'free';
-    
     IF free_plan_id IS NULL THEN
         RAISE EXCEPTION 'Free plan not found';
     END IF;
-    
-    -- Create free subscription
+
     INSERT INTO public.user_subscriptions (
-        user_id,
-        plan_id,
-        status,
-        cancel_at_period_end,
-        created_at,
-        updated_at
+        user_id, plan_id, status, cancel_at_period_end, created_at, updated_at
     ) VALUES (
-        p_user_id,
-        free_plan_id,
-        'active',
-        false,
-        NOW(),
-        NOW()
+        p_user_id, free_plan_id, 'active', false, NOW(), NOW()
     );
-    
-    -- Initialize usage tracking
-    INSERT INTO public.usage_tracking (
-        user_id,
-        memory_count,
-        file_count,
-        last_reset_at,
-        created_at,
-        updated_at
-    ) VALUES (
-        p_user_id,
-        0,
-        0,
-        NOW(),
-        NOW(),
-        NOW()
-    )
-    ON CONFLICT (user_id) DO UPDATE SET
-        updated_at = NOW();
-    
+
+    -- usage_tracking is handled by its own trigger, but keep a safety net
+    INSERT INTO public.usage_tracking (user_id, memory_count, file_count)
+    VALUES (p_user_id, 0, 0)
+    ON CONFLICT (user_id) DO NOTHING;
+
     RAISE NOTICE 'Successfully migrated user % to free plan', p_user_id;
     RETURN TRUE;
-    
 EXCEPTION
     WHEN OTHERS THEN
         RAISE WARNING 'Failed to migrate user %: %', p_user_id, SQLERRM;
@@ -2775,6 +3153,13 @@ BEGIN
 END;
 
 $function$;
+CREATE OR REPLACE FUNCTION public.subvector(vector, integer, integer)
+RETURNS vector
+LANGUAGE c
+IMMUTABLE
+AS $function$
+subvector
+$function$;
 CREATE OR REPLACE FUNCTION public.subvector(halfvec, integer, integer)
 RETURNS halfvec
 LANGUAGE c
@@ -2782,12 +3167,12 @@ IMMUTABLE
 AS $function$
 halfvec_subvector
 $function$;
-CREATE OR REPLACE FUNCTION public.subvector(vector, integer, integer)
+CREATE OR REPLACE FUNCTION public.sum(vector)
 RETURNS vector
-LANGUAGE c
+LANGUAGE internal
 IMMUTABLE
 AS $function$
-subvector
+aggregate_dummy
 $function$;
 CREATE OR REPLACE FUNCTION public.sum(halfvec)
 RETURNS halfvec
@@ -2796,12 +3181,17 @@ IMMUTABLE
 AS $function$
 aggregate_dummy
 $function$;
-CREATE OR REPLACE FUNCTION public.sum(vector)
-RETURNS vector
-LANGUAGE internal
-IMMUTABLE
+CREATE OR REPLACE FUNCTION public.update_encrypted_user_files_updated_at()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
 AS $function$
-aggregate_dummy
+
+begin
+  new.updated_at = now();
+  return new;
+end;
+
 $function$;
 CREATE OR REPLACE FUNCTION public.update_memory_embedding(uuid, vector)
 RETURNS boolean
@@ -2825,8 +3215,8 @@ VOLATILE
 AS $function$
 
 BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
+  NEW.updated_at = now();
+  RETURN NEW;
 END;
 
 $function$;
@@ -3795,6 +4185,69 @@ BEGIN
 END
 
 $function$;
+CREATE OR REPLACE FUNCTION storage.delete_leaf_prefixes(text[], text[])
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_rows_deleted integer;
+BEGIN
+    LOOP
+        WITH candidates AS (
+            SELECT DISTINCT
+                t.bucket_id,
+                unnest(storage.get_prefixes(t.name)) AS name
+            FROM unnest(bucket_ids, names) AS t(bucket_id, name)
+        ),
+        uniq AS (
+             SELECT
+                 bucket_id,
+                 name,
+                 storage.get_level(name) AS level
+             FROM candidates
+             WHERE name <> ''
+             GROUP BY bucket_id, name
+        ),
+        leaf AS (
+             SELECT
+                 p.bucket_id,
+                 p.name,
+                 p.level
+             FROM storage.prefixes AS p
+                  JOIN uniq AS u
+                       ON u.bucket_id = p.bucket_id
+                           AND u.name = p.name
+                           AND u.level = p.level
+             WHERE NOT EXISTS (
+                 SELECT 1
+                 FROM storage.objects AS o
+                 WHERE o.bucket_id = p.bucket_id
+                   AND o.level = p.level + 1
+                   AND o.name COLLATE "C" LIKE p.name || '/%'
+             )
+             AND NOT EXISTS (
+                 SELECT 1
+                 FROM storage.prefixes AS c
+                 WHERE c.bucket_id = p.bucket_id
+                   AND c.level = p.level + 1
+                   AND c.name COLLATE "C" LIKE p.name || '/%'
+             )
+        )
+        DELETE
+        FROM storage.prefixes AS p
+            USING leaf AS l
+        WHERE p.bucket_id = l.bucket_id
+          AND p.name = l.name
+          AND p.level = l.level;
+
+        GET DIAGNOSTICS v_rows_deleted = ROW_COUNT;
+        EXIT WHEN v_rows_deleted = 0;
+    END LOOP;
+END;
+
+$function$;
 CREATE OR REPLACE FUNCTION storage.delete_prefix(text, text)
 RETURNS boolean
 LANGUAGE plpgsql
@@ -4056,6 +4509,57 @@ BEGIN
 END;
 
 $function$;
+CREATE OR REPLACE FUNCTION storage.lock_top_prefixes(text[], text[])
+RETURNS void
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_bucket text;
+    v_top text;
+BEGIN
+    FOR v_bucket, v_top IN
+        SELECT DISTINCT t.bucket_id,
+            split_part(t.name, '/', 1) AS top
+        FROM unnest(bucket_ids, names) AS t(bucket_id, name)
+        WHERE t.name <> ''
+        ORDER BY 1, 2
+        LOOP
+            PERFORM pg_advisory_xact_lock(hashtextextended(v_bucket || '/' || v_top, 0));
+        END LOOP;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.objects_delete_cleanup()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_bucket_ids text[];
+    v_names      text[];
+BEGIN
+    IF current_setting('storage.gc.prefixes', true) = '1' THEN
+        RETURN NULL;
+    END IF;
+
+    PERFORM set_config('storage.gc.prefixes', '1', true);
+
+    SELECT COALESCE(array_agg(d.bucket_id), '{}'),
+           COALESCE(array_agg(d.name), '{}')
+    INTO v_bucket_ids, v_names
+    FROM deleted AS d
+    WHERE d.name <> '';
+
+    PERFORM storage.lock_top_prefixes(v_bucket_ids, v_names);
+    PERFORM storage.delete_leaf_prefixes(v_bucket_ids, v_names);
+
+    RETURN NULL;
+END;
+
+$function$;
 CREATE OR REPLACE FUNCTION storage.objects_insert_prefix_trigger()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -4066,6 +4570,112 @@ BEGIN
     PERFORM "storage"."add_prefixes"(NEW."bucket_id", NEW."name");
     NEW.level := "storage"."get_level"(NEW."name");
 
+    RETURN NEW;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.objects_update_cleanup()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    -- NEW - OLD (destinations to create prefixes for)
+    v_add_bucket_ids text[];
+    v_add_names      text[];
+
+    -- OLD - NEW (sources to prune)
+    v_src_bucket_ids text[];
+    v_src_names      text[];
+BEGIN
+    IF TG_OP <> 'UPDATE' THEN
+        RETURN NULL;
+    END IF;
+
+    -- 1) Compute NEW−OLD (added paths) and OLD−NEW (moved-away paths)
+    WITH added AS (
+        SELECT n.bucket_id, n.name
+        FROM new_rows n
+        WHERE n.name <> '' AND position('/' in n.name) > 0
+        EXCEPT
+        SELECT o.bucket_id, o.name FROM old_rows o WHERE o.name <> ''
+    ),
+    moved AS (
+         SELECT o.bucket_id, o.name
+         FROM old_rows o
+         WHERE o.name <> ''
+         EXCEPT
+         SELECT n.bucket_id, n.name FROM new_rows n WHERE n.name <> ''
+    )
+    SELECT
+        -- arrays for ADDED (dest) in stable order
+        COALESCE( (SELECT array_agg(a.bucket_id ORDER BY a.bucket_id, a.name) FROM added a), '{}' ),
+        COALESCE( (SELECT array_agg(a.name      ORDER BY a.bucket_id, a.name) FROM added a), '{}' ),
+        -- arrays for MOVED (src) in stable order
+        COALESCE( (SELECT array_agg(m.bucket_id ORDER BY m.bucket_id, m.name) FROM moved m), '{}' ),
+        COALESCE( (SELECT array_agg(m.name      ORDER BY m.bucket_id, m.name) FROM moved m), '{}' )
+    INTO v_add_bucket_ids, v_add_names, v_src_bucket_ids, v_src_names;
+
+    -- Nothing to do?
+    IF (array_length(v_add_bucket_ids, 1) IS NULL) AND (array_length(v_src_bucket_ids, 1) IS NULL) THEN
+        RETURN NULL;
+    END IF;
+
+    -- 2) Take per-(bucket, top) locks: ALL prefixes in consistent global order to prevent deadlocks
+    DECLARE
+        v_all_bucket_ids text[];
+        v_all_names text[];
+    BEGIN
+        -- Combine source and destination arrays for consistent lock ordering
+        v_all_bucket_ids := COALESCE(v_src_bucket_ids, '{}') || COALESCE(v_add_bucket_ids, '{}');
+        v_all_names := COALESCE(v_src_names, '{}') || COALESCE(v_add_names, '{}');
+
+        -- Single lock call ensures consistent global ordering across all transactions
+        IF array_length(v_all_bucket_ids, 1) IS NOT NULL THEN
+            PERFORM storage.lock_top_prefixes(v_all_bucket_ids, v_all_names);
+        END IF;
+    END;
+
+    -- 3) Create destination prefixes (NEW−OLD) BEFORE pruning sources
+    IF array_length(v_add_bucket_ids, 1) IS NOT NULL THEN
+        WITH candidates AS (
+            SELECT DISTINCT t.bucket_id, unnest(storage.get_prefixes(t.name)) AS name
+            FROM unnest(v_add_bucket_ids, v_add_names) AS t(bucket_id, name)
+            WHERE name <> ''
+        )
+        INSERT INTO storage.prefixes (bucket_id, name)
+        SELECT c.bucket_id, c.name
+        FROM candidates c
+        ON CONFLICT DO NOTHING;
+    END IF;
+
+    -- 4) Prune source prefixes bottom-up for OLD−NEW
+    IF array_length(v_src_bucket_ids, 1) IS NOT NULL THEN
+        -- re-entrancy guard so DELETE on prefixes won't recurse
+        IF current_setting('storage.gc.prefixes', true) <> '1' THEN
+            PERFORM set_config('storage.gc.prefixes', '1', true);
+        END IF;
+
+        PERFORM storage.delete_leaf_prefixes(v_src_bucket_ids, v_src_names);
+    END IF;
+
+    RETURN NULL;
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.objects_update_level_trigger()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+BEGIN
+    -- Ensure this is an update operation and the name has changed
+    IF TG_OP = 'UPDATE' AND (NEW."name" <> OLD."name" OR NEW."bucket_id" <> OLD."bucket_id") THEN
+        -- Set the new level
+        NEW."level" := "storage"."get_level"(NEW."name");
+    END IF;
     RETURN NEW;
 END;
 
@@ -4118,6 +4728,35 @@ AS $function$
 
 BEGIN
     RETURN current_setting('storage.operation', true);
+END;
+
+$function$;
+CREATE OR REPLACE FUNCTION storage.prefixes_delete_cleanup()
+RETURNS trigger
+LANGUAGE plpgsql
+VOLATILE
+AS $function$
+
+DECLARE
+    v_bucket_ids text[];
+    v_names      text[];
+BEGIN
+    IF current_setting('storage.gc.prefixes', true) = '1' THEN
+        RETURN NULL;
+    END IF;
+
+    PERFORM set_config('storage.gc.prefixes', '1', true);
+
+    SELECT COALESCE(array_agg(d.bucket_id), '{}'),
+           COALESCE(array_agg(d.name), '{}')
+    INTO v_bucket_ids, v_names
+    FROM deleted AS d
+    WHERE d.name <> '';
+
+    PERFORM storage.lock_top_prefixes(v_bucket_ids, v_names);
+    PERFORM storage.delete_leaf_prefixes(v_bucket_ids, v_names);
+
+    RETURN NULL;
 END;
 
 $function$;
@@ -4288,48 +4927,97 @@ begin
 end;
 
 $function$;
-CREATE OR REPLACE FUNCTION storage.search_v2(text, text, integer, integer, text)
+CREATE OR REPLACE FUNCTION storage.search_v2(text, text, integer, integer, text, text, text, text)
 RETURNS record
 LANGUAGE plpgsql
 STABLE
 AS $function$
 
+DECLARE
+    sort_col text;
+    sort_ord text;
+    cursor_op text;
+    cursor_expr text;
+    sort_expr text;
 BEGIN
-    RETURN query EXECUTE
+    -- Validate sort_order
+    sort_ord := lower(sort_order);
+    IF sort_ord NOT IN ('asc', 'desc') THEN
+        sort_ord := 'asc';
+    END IF;
+
+    -- Determine cursor comparison operator
+    IF sort_ord = 'asc' THEN
+        cursor_op := '>';
+    ELSE
+        cursor_op := '<';
+    END IF;
+    
+    sort_col := lower(sort_column);
+    -- Validate sort column  
+    IF sort_col IN ('updated_at', 'created_at') THEN
+        cursor_expr := format(
+            '($5 = '''' OR ROW(date_trunc(''milliseconds'', %I), name COLLATE "C") %s ROW(COALESCE(NULLIF($6, '''')::timestamptz, ''epoch''::timestamptz), $5))',
+            sort_col, cursor_op
+        );
+        sort_expr := format(
+            'COALESCE(date_trunc(''milliseconds'', %I), ''epoch''::timestamptz) %s, name COLLATE "C" %s',
+            sort_col, sort_ord, sort_ord
+        );
+    ELSE
+        cursor_expr := format('($5 = '''' OR name COLLATE "C" %s $5)', cursor_op);
+        sort_expr := format('name COLLATE "C" %s', sort_ord);
+    END IF;
+
+    RETURN QUERY EXECUTE format(
         $sql$
         SELECT * FROM (
             (
                 SELECT
                     split_part(name, '/', $4) AS key,
-                    name || '/' AS name,
+                    name,
                     NULL::uuid AS id,
-                    NULL::timestamptz AS updated_at,
-                    NULL::timestamptz AS created_at,
+                    updated_at,
+                    created_at,
+                    NULL::timestamptz AS last_accessed_at,
                     NULL::jsonb AS metadata
                 FROM storage.prefixes
-                WHERE name COLLATE "C" LIKE $1 || '%'
-                AND bucket_id = $2
-                AND level = $4
-                AND name COLLATE "C" > $5
-                ORDER BY prefixes.name COLLATE "C" LIMIT $3
+                WHERE name COLLATE "C" LIKE $1 || '%%'
+                    AND bucket_id = $2
+                    AND level = $4
+                    AND %s
+                ORDER BY %s
+                LIMIT $3
             )
             UNION ALL
-            (SELECT split_part(name, '/', $4) AS key,
-                name,
-                id,
-                updated_at,
-                created_at,
-                metadata
-            FROM storage.objects
-            WHERE name COLLATE "C" LIKE $1 || '%'
-                AND bucket_id = $2
-                AND level = $4
-                AND name COLLATE "C" > $5
-            ORDER BY name COLLATE "C" LIMIT $3)
+            (
+                SELECT
+                    split_part(name, '/', $4) AS key,
+                    name,
+                    id,
+                    updated_at,
+                    created_at,
+                    last_accessed_at,
+                    metadata
+                FROM storage.objects
+                WHERE name COLLATE "C" LIKE $1 || '%%'
+                    AND bucket_id = $2
+                    AND level = $4
+                    AND %s
+                ORDER BY %s
+                LIMIT $3
+            )
         ) obj
-        ORDER BY name COLLATE "C" LIMIT $3;
-        $sql$
-        USING prefix, bucket_name, limits, levels, start_after;
+        ORDER BY %s
+        LIMIT $3
+        $sql$,
+        cursor_expr,    -- prefixes WHERE
+        sort_expr,      -- prefixes ORDER BY
+        cursor_expr,    -- objects WHERE
+        sort_expr,      -- objects ORDER BY
+        sort_expr       -- final ORDER BY
+    )
+    USING prefix, bucket_name, limits, levels, start_after, sort_column_after;
 END;
 
 $function$;
@@ -4425,14 +5113,20 @@ $function$;
 -- Triggers
 CREATE TRIGGER assign_free_subscription_on_signup AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION assign_free_subscription_on_signup();
 CREATE TRIGGER create_user_encryption_profile AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION initialize_user_encryption_profile();
+CREATE TRIGGER cron_job_cache_invalidate AFTER INSERT OR DELETE OR UPDATE OR TRUNCATE ON cron.job FOR EACH STATEMENT EXECUTE FUNCTION cron.job_cache_invalidate();
 CREATE TRIGGER ensure_single_active_subscription_trigger AFTER INSERT OR UPDATE ON public.user_subscriptions FOR EACH ROW WHEN (((new.status)::text = 'active'::text)) EXECUTE FUNCTION ensure_single_active_subscription();
 CREATE TRIGGER initialize_usage_tracking_trigger AFTER INSERT ON public.user_subscriptions FOR EACH ROW EXECUTE FUNCTION initialize_user_usage_tracking();
 CREATE TRIGGER log_webhook_processing_trigger BEFORE UPDATE ON public.webhook_events FOR EACH ROW EXECUTE FUNCTION log_webhook_processing();
 CREATE TRIGGER trigger_update_user_notifications_updated_at BEFORE UPDATE ON public.user_notifications FOR EACH ROW EXECUTE FUNCTION update_user_notifications_updated_at();
 CREATE TRIGGER update_encrypted_memories_updated_at BEFORE UPDATE ON public.encrypted_memories FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_encrypted_user_files_updated_at BEFORE UPDATE ON public.encrypted_user_files FOR EACH ROW EXECUTE FUNCTION update_encrypted_user_files_updated_at();
+CREATE TRIGGER update_integration_providers_updated_at BEFORE UPDATE ON public.integration_providers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_reminder_templates_updated_at BEFORE UPDATE ON public.reminder_templates FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_scheduled_tasks_updated_at BEFORE UPDATE ON public.scheduled_tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_subscription_plans_updated_at BEFORE UPDATE ON public.subscription_plans FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_usage_tracking_updated_at BEFORE UPDATE ON public.usage_tracking FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_encryption_profiles_updated_at BEFORE UPDATE ON public.user_encryption_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_user_integrations_updated_at BEFORE UPDATE ON public.user_integrations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_user_subscriptions_updated_at BEFORE UPDATE ON public.user_subscriptions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER validate_subscription_periods_trigger BEFORE INSERT OR UPDATE ON public.user_subscriptions FOR EACH ROW EXECUTE FUNCTION validate_subscription_periods();
 CREATE TRIGGER tr_check_filters BEFORE INSERT OR UPDATE ON realtime.subscription FOR EACH ROW EXECUTE FUNCTION realtime.subscription_check_filters();

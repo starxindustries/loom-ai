@@ -264,6 +264,37 @@ export class AESGCMCrypto {
   }
 
   /**
+   * Encrypt binary data (ArrayBuffer) using AES-GCM
+   */
+  static async encryptBytes(
+    data: ArrayBuffer,
+    key: CryptoKey
+  ): Promise<EncryptedData> {
+    try {
+      const iv = CryptoUtils.generateRandomBytes(
+        CRYPTO_CONFIG.GCM_IV_LENGTH / 8
+      );
+
+      const ciphertext = await crypto.subtle.encrypt(
+        {
+          name: "AES-GCM",
+          iv: iv,
+        },
+        key,
+        data
+      );
+
+      return {
+        ciphertext: CryptoUtils.arrayBufferToBase64(ciphertext),
+        iv: CryptoUtils.arrayBufferToBase64(iv),
+        algorithm: CRYPTO_CONFIG.ENCRYPTION_ALGORITHM,
+      };
+    } catch (error) {
+      throw new CryptoError(`Encryption failed: ${error}`, "ENCRYPTION_FAILED");
+    }
+  }
+
+  /**
    * Decrypt data using AES-GCM
    */
   static async decrypt(
@@ -286,6 +317,34 @@ export class AESGCMCrypto {
       );
 
       return CryptoUtils.arrayBufferToString(decryptedBuffer);
+    } catch (error) {
+      throw new DecryptionError(`Decryption failed: ${error}`);
+    }
+  }
+
+  /**
+   * Decrypt to binary (ArrayBuffer) using AES-GCM
+   */
+  static async decryptBytes(
+    encryptedData: EncryptedData,
+    key: CryptoKey
+  ): Promise<ArrayBuffer> {
+    try {
+      const ciphertext = CryptoUtils.base64ToArrayBuffer(
+        encryptedData.ciphertext
+      );
+      const iv = CryptoUtils.base64ToArrayBuffer(encryptedData.iv);
+
+      const decryptedBuffer = await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: iv,
+        },
+        key,
+        ciphertext
+      );
+
+      return decryptedBuffer;
     } catch (error) {
       throw new DecryptionError(`Decryption failed: ${error}`);
     }

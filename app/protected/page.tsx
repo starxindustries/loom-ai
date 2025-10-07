@@ -162,7 +162,7 @@ function EncryptedChatContent() {
   // Show loading screen during initialization
   if (isInitializing) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -195,8 +195,7 @@ function EncryptedChatContent() {
   }
 
   return (
-    <div className="bg-background">
-      {/* Header */}
+    <div className="flex flex-col h-full">
       {/* Error Alert */}
       <AnimatePresence>
         {error && (
@@ -204,7 +203,7 @@ function EncryptedChatContent() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="max-w-6xl mx-auto px-6 pt-4"
+            className="max-w-6xl mx-auto px-6 pt-2"
           >
             <Alert variant="destructive">
               <AlertTriangleIcon className="h-4 w-4" />
@@ -323,7 +322,7 @@ function EncryptedChatContent() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-background rounded-lg shadow-xl max-w-md w-full"
+              className="rounded-lg shadow-xl max-w-md w-full"
             >
               <Card className="border-0">
                 <CardHeader>
@@ -412,15 +411,17 @@ function EncryptedChatContent() {
       </AnimatePresence>
 
       {/* Main Chat Interface */}
-      <div className="flex-1 pt-14">
+      <div className="flex-1 min-h-0">
         {isSessionActive ? (
-          <ChatSystem
-            messages={messages}
-            onSendMessage={sendMessage}
-            onStopGeneration={stopGeneration}
-            onClearMessages={clearMessages}
-            isLoading={isLoading}
-          />
+          <div className="h-full">
+            <ChatSystem
+              messages={messages}
+              onSendMessage={sendMessage}
+              onStopGeneration={stopGeneration}
+              onClearMessages={clearMessages}
+              isLoading={isLoading}
+            />
+          </div>
         ) : (
           <div className="flex items-center justify-center h-[60vh]">
             <Card className="max-w-md">
@@ -454,7 +455,7 @@ function EncryptedChatContent() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-background rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto"
+              className="rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto"
             >
               <div className="space-y-6">
                 {/* Header */}
@@ -519,7 +520,7 @@ function EncryptedChatContent() {
                       <label className="text-sm font-medium text-green-700 dark:text-green-400">
                         Your Recovery Key:
                       </label>
-                      <div className="mt-2 font-mono text-sm bg-background p-3 rounded border break-all">
+                      <div className="mt-2 font-mono text-sm p-3 rounded border break-all">
                         {showPassphrase
                           ? generatedPassphrase
                           : "••••••••••••••••••••••••••••••••••••••"}
@@ -618,7 +619,7 @@ export default function EncryptedChatPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
