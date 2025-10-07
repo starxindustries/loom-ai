@@ -92,6 +92,6 @@ export const config = {
      * Feel free to modify this pattern to include more paths.
      */
     // Exclude api/webhooks and api/auth (OAuth callbacks) from middleware to prevent 307/redirects & body tampering
-    "/((?!api/webhooks|api/auth|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api/webhooks|api/auth|_next/static|_next/image|favicon.ico|blogs(?:/.*)?|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
