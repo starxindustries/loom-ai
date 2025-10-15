@@ -149,7 +149,7 @@ WHEN TO STORE MEMORIES (use store_encrypted_memory):
 ✅ Medical info: allergies, conditions (if shared)
 
 EXAMPLES:
-- User: "My birthday is July 4th" → STORE: "Birthday: July 4th, 2003" with keywords: ["birthday", "birth", "july"]
+- User: "My birthday is July 4th" → STORE: "Birthday: July 4th" with keywords: ["birthday", "birth", "july"]
 - User: "I work at Google" → STORE: "Works at Google" with keywords: ["work", "job", "google"]  
 - User: "I love pizza" → STORE: "Loves pizza" with keywords: ["food", "preference", "pizza"]
 

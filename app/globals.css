@@ -305,3 +305,291 @@
 .react-flow__arrowhead {
   fill: hsl(var(--primary)) !important;
 }
+
+/* Enhanced Blog Content Styling */
+.blog-content {
+  line-height: 1.7;
+  font-size: 1.1rem;
+}
+
+.blog-content h1 {
+  position: relative;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid hsl(var(--border));
+  margin-bottom: 2rem !important;
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content h2 {
+  position: relative;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid hsl(var(--border));
+  margin-bottom: 1.5rem !important;
+  font-size: 2rem !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content h3 {
+  margin-bottom: 1rem !important;
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content h4 {
+  margin-bottom: 0.75rem !important;
+  font-size: 1.25rem !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content p {
+  margin-bottom: 1.5rem !important;
+  text-align: justify;
+  hyphens: auto;
+  font-size: 1.1rem !important;
+  line-height: 1.7 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content strong {
+  font-weight: 600 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content em {
+  font-style: italic !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content hr {
+  margin: 3rem 0 !important;
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+  display: block !important;
+}
+
+.blog-content ul, .blog-content ol {
+  margin-bottom: 1.5rem !important;
+  padding-left: 1.5rem;
+}
+
+.blog-content li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.blog-content blockquote {
+  margin: 2rem 0 !important;
+  font-style: italic;
+  position: relative;
+}
+
+.blog-content blockquote::before {
+  content: '"';
+  font-size: 4rem;
+  color: hsl(var(--primary));
+  position: absolute;
+  top: -0.5rem;
+  left: -0.5rem;
+  line-height: 1;
+  opacity: 0.3;
+}
+
+.blog-content pre {
+  margin: 2rem 0 !important;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  position: relative;
+}
+
+.blog-content pre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2rem;
+  background: linear-gradient(90deg, #ff5f56, #ffbd2e, #27ca3f);
+  border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.blog-content code {
+  font-family: 'Source Code Pro', 'Fira Code', 'Monaco', 'Consolas', monospace;
+  font-size: 0.9em;
+}
+
+.blog-content img {
+  margin: 2rem 0 !important;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+.blog-content img:hover {
+  transform: scale(1.02);
+}
+
+.blog-content a {
+  text-decoration: none;
+  border-bottom: 1px solid hsl(var(--primary));
+  transition: all 0.2s ease-in-out;
+  position: relative;
+}
+
+.blog-content a:hover {
+  background-color: hsl(var(--primary) / 0.1);
+  border-bottom-width: 2px;
+}
+
+.blog-content table {
+  margin: 2rem 0 !important;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.blog-content th {
+  background: linear-gradient(135deg, hsl(var(--muted)), hsl(var(--muted) / 0.8));
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+}
+
+.blog-content td {
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.blog-content tr:hover {
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+.blog-content hr {
+  margin: 3rem 0 !important;
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent);
+}
+
+/* Enhanced list styling */
+.blog-content ul li::marker {
+  color: hsl(var(--primary));
+  font-size: 1.2em;
+}
+
+.blog-content ol li::marker {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+/* Code block enhancements */
+.blog-content pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Force HTML element styling */
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4,
+.blog-content h5,
+.blog-content h6 {
+  display: block !important;
+  margin-top: 0 !important;
+  margin-bottom: 1rem !important;
+  font-weight: 600 !important;
+  line-height: 1.25 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content h1 {
+  font-size: 2.5rem !important;
+  font-weight: 700 !important;
+  margin-bottom: 2rem !important;
+}
+
+.blog-content h2 {
+  font-size: 2rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.blog-content h3 {
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 1rem !important;
+}
+
+.blog-content h4 {
+  font-size: 1.25rem !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.blog-content p {
+  display: block !important;
+  margin-bottom: 1.5rem !important;
+  font-size: 1.1rem !important;
+  line-height: 1.7 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content strong {
+  font-weight: 600 !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content em {
+  font-style: italic !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.blog-content hr {
+  display: block !important;
+  margin: 3rem 0 !important;
+  border: none !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, transparent, hsl(var(--border)), transparent) !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .blog-content {
+    font-size: 1rem;
+  }
+  
+  .blog-content h1 {
+    font-size: 1.8rem !important;
+  }
+  
+  .blog-content h2 {
+    font-size: 1.5rem !important;
+  }
+  
+  .blog-content h3 {
+    font-size: 1.25rem !important;
+  }
+  
+  .blog-content blockquote {
+    margin: 1.5rem 0 !important;
+    padding-left: 1rem;
+  }
+  
+  .blog-content pre {
+    margin: 1.5rem 0 !important;
+    font-size: 0.85rem;
+  }
+}

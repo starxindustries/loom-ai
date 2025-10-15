@@ -134,7 +134,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       alt="logo"
                       width={40}
                       height={40}
-                      className="grayscale invert"
+                      className="grayscale invert dark:invert-0"
                       quality={100}
                       priority
                       unoptimized

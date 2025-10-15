@@ -7,6 +7,102 @@ import PricingSection from "@/components/blocks/pricing-section"
 import { CTA } from "@/components/blocks/cta-demo"
 import { BackgroundBeams } from "@/components/ui/background-beams"
 import { Footer } from "@/components/ui/large-name-footer"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  title: "Loom AI Memory - AI Powered Personal Memory Assistant",
+  description: "Loom AI Memory is an AI powered personal memory assistant for the digital age. Organize, remember, and access your digital memories with advanced AI technology.",
+  keywords: [
+    "AI memory assistant",
+    "personal memory",
+    "digital organization",
+    "AI productivity",
+    "memory management",
+    "AI assistant",
+    "digital memories",
+    "productivity tool"
+  ],
+  openGraph: {
+    title: "Loom AI Memory - AI Powered Personal Memory Assistant",
+    description: "Loom AI Memory is an AI powered personal memory assistant for the digital age. Organize, remember, and access your digital memories with advanced AI technology.",
+    type: "website",
+    url: "/",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Loom AI Memory - AI Powered Personal Memory Assistant",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Loom AI Memory - AI Powered Personal Memory Assistant",
+    description: "Loom AI Memory is an AI powered personal memory assistant for the digital age. Organize, remember, and access your digital memories with advanced AI technology.",
+    images: ["/og-image.png"],
+  },
+  alternates: {
+    canonical: "/",
+  },
+  other: {
+    'application/ld+json': JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Loom AI Memory",
+      "description": "AI powered personal memory assistant for the digital age",
+      "url": process.env.NEXT_PUBLIC_SITE_URL || "https://loom-ai.vercel.app",
+      "applicationCategory": "ProductivityApplication",
+      "operatingSystem": "Web",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free Plan",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "20 Memory Records, 2 File Records"
+        },
+        {
+          "@type": "Offer",
+          "name": "Starter Plan",
+          "price": "9.99",
+          "priceCurrency": "USD",
+          "description": "100 Memory Records, 10 File Records"
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro Plan",
+          "price": "19.99",
+          "priceCurrency": "USD",
+          "description": "500 Memory Records, 50 File Records"
+        },
+        {
+          "@type": "Offer",
+          "name": "Pro Plus Plan",
+          "price": "39.99",
+          "priceCurrency": "USD",
+          "description": "2,000 Memory Records, 200 File Records"
+        }
+      ],
+      "author": {
+        "@type": "Organization",
+        "name": "Loom AI"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Loom AI"
+      },
+      "featureList": [
+        "AI-powered memory storage and recall",
+        "Smart reminders and task automation",
+        "Secure file management",
+        "Global access and synchronization",
+        "Advanced search capabilities",
+        "Privacy-focused design"
+      ]
+    })
+  }
+}
 
 export default function Demo() {
   return (

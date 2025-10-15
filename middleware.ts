@@ -89,9 +89,10 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - images - .svg, .png, .jpg, .jpeg, .gif, .webp
+     * - robots.txt, sitemap.xml, manifest.json (SEO files)
      * Feel free to modify this pattern to include more paths.
      */
-    // Exclude api/webhooks and api/auth (OAuth callbacks) from middleware to prevent 307/redirects & body tampering
-    "/((?!api/webhooks|api/auth|_next/static|_next/image|favicon.ico|blogs(?:/.*)?|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Exclude api/webhooks, api/auth, SEO files, and static assets from middleware
+    "/((?!api/webhooks|api/auth|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.json|blogs(?:/.*)?|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
