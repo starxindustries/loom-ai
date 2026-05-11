@@ -148,4 +148,4 @@ Tracked in [`Todo.md`](Todo.md). Highlights: migrate legacy RPCs onto the encryp
 
 ## License
 
-No license file is currently in the repo. Add one (MIT / Apache-2.0 / proprietary) before sharing publicly.
+No license file is currently in the repo. Add one (MIT / Apache-2.0 / proprietary) before sharing publicly. 
