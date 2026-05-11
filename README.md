@@ -1,37 +1,151 @@
-# Loom AI – Project Overview
+# Loom AI
 
-## Introduction
+> An encrypted "memory card" for humans — store notes, files, and reminders; let an AI assistant recall them and run automations on your behalf.
 
-Loom AI is an innovative AI-powered platform designed to act as a **human memory card**. It helps people securely store and recall their important information, personal data, files, and tasks — all while keeping privacy and control entirely in the hands of the user.
+Built with Next.js 15, Supabase, and OpenAI. Per-user end-to-end encryption, OAuth-driven integrations (Gmail, Slack, Notion, Google Calendar), Lemonsqueezy billing, and a Supabase Edge Function scheduler that executes time-based actions.
 
-## Vision
+## What this project does
 
-To give every human the ability to store, manage, and act on their memories as if they had an external memory card — one that is intelligent, private, and entirely theirs.
+- 📒 **Memory store** — encrypted notes, passwords, reference info, structured records.
+- 📎 **Encrypted files** — upload & retrieve documents stored as encrypted blobs in Supabase Storage.
+- ⏰ **Reminders & automations** — schedule actions like "email my boss at 9am Monday"; an Edge Function executes them via the user's OAuth-connected accounts.
+- 🤖 **AI chat** — assistant that reads (decrypted) memories on demand and proposes / runs actions.
+- 💳 **Subscriptions** — plan gating + usage limits powered by Lemonsqueezy webhooks.
+- 🛠️ **Admin / analytics / settings** — full SaaS shell.
 
-## Core Principles
+## Tech stack
 
-* **End-to-End Encryption (E2E)**: Every piece of data is encrypted. Only the user holds the recovery key, ensuring even developers cannot access or interpret user data.
-* **Unique Language Storage**: Data is stored in a form that is meaningless to anyone except the user. Even if found, it cannot be understood or used.
-* **User Ownership**: The user fully owns and controls their memory, with no third-party access.
+- **Framework:** Next.js 15 (App Router, Turbopack) · React 19 · TypeScript
+- **Styling:** Tailwind v4 · shadcn/ui · Radix
+- **Auth + DB + Storage + Edge Functions:** Supabase (Postgres + RLS)
+- **AI:** OpenAI SDK
+- **Billing:** Lemonsqueezy
+- **Integrations:** Google OAuth (Gmail / Calendar), Slack, Notion
+- **Package manager:** Bun (npm works too)
 
-## Types of Memory (Current)
+## Quickstart
 
-Loom AI currently supports three main forms of memory:
+### Prerequisites
 
-1. **Text Memory** – Passwords, birthdates, personal information, business details, and more.
-2. **Files** – Documents, images, and other digital files.
-3. **Reminders & Actions** – Time-based reminders and automated actions such as sending an email to a boss at a specific time.
+- [Bun](https://bun.sh) ≥ 1.1 (or Node 20+)
+- A [Supabase](https://supabase.com) project (free tier is fine)
+- An [OpenAI](https://platform.openai.com) API key
+- *(Optional)* Lemonsqueezy store, Google / Slack / Notion OAuth apps for the full feature set
 
-## Future Expansion
+### Install & run
 
-The system will expand to include more forms of memory and deeper integrations, making Loom AI a true extension of human intelligence and productivity.
+```bash
+git clone <this-repo> loom-ai && cd loom-ai
 
-## Why Loom AI Matters
+# 1. Install
+bun install              # or: npm install
 
-* Reduces the burden of remembering personal and professional details.
-* Provides peace of mind with secure storage.
-* Enables AI-powered automation of small but critical daily tasks.
+# 2. Configure environment
+cp .env.example .env.local
+# fill in Supabase, OpenAI, OAuth, and Lemonsqueezy keys (all documented inline)
 
-## Conclusion
+# 3. Provision the database
+npm run setup:db         # = migrate + seed plans + migrate users
 
-Loom AI is not just another app — it is a **personal memory companion**. With absolute privacy, strong encryption, and intelligent automation, Loom AI empowers humans to focus on living while their digital memory stays safe, accessible, and action-ready.
+# 4. Start the dev server
+bun run dev              # http://localhost:3000
+```
+
+For OAuth integration setup (Gmail, Slack, Notion), see **[DOCS/oauth-setup.md](DOCS/oauth-setup.md)**.
+
+### All scripts
+
+| Command                   | Description                                            |
+| ------------------------- | ------------------------------------------------------ |
+| `bun run dev`             | Next dev server (Turbopack)                            |
+| `bun run build` / `start` | Production build / serve                               |
+| `bun run lint`            | Lint                                                   |
+| `npm run migrate`         | Apply numbered SQL migrations in `schema/migrations/`  |
+| `npm run migrate:status`  | Show which migrations have been applied                |
+| `npm run seed:plans`      | Seed Lemonsqueezy subscription plans                   |
+| `npm run migrate:users`   | Backfill the `users` table from `auth.users`           |
+| `npm run setup:db`        | One-shot: migrate → seed plans → migrate users         |
+
+## Usage examples
+
+**AI chat endpoint** (authenticated):
+
+```bash
+curl -X POST http://localhost:3000/api/chat \
+  -H "Content-Type: application/json" \
+  -H "Cookie: <your supabase session cookie>" \
+  -d '{"messages":[{"role":"user","content":"What is my wifi password?"}]}'
+```
+
+**Common pages once the dev server is running:**
+
+- `/` — landing page
+- `/auth/login` — sign in (Supabase auth)
+- `/protected` — main dashboard (requires login + active plan)
+- `/protected/memories` — encrypted memory store
+- `/protected/automations` — scheduled actions
+- `/protected/settings` — connect OAuth integrations
+- `/protected/billing` — Lemonsqueezy plan management
+
+## Architecture
+
+```
+Browser
+  │
+  ▼
+Next.js middleware  ── auth refresh + subscription gating
+  │
+  ├─► app/api/chat            → OpenAI + memory recall
+  ├─► app/api/memories/*      → encrypted CRUD
+  ├─► app/api/webhooks/*      → Lemonsqueezy + integration callbacks
+  └─► app/api/auth/oauth/*    → connect Google / Slack / Notion
+        │
+        ▼
+   Supabase  (Postgres w/ RLS · Auth · Storage · Edge Functions)
+        │
+        ▼
+   execute-task edge function   ── cron-driven action runner
+   (Gmail send · Slack post · Notion write · Calendar event)
+```
+
+A deeper, annotated diagram lives in **[DOCS/ARCHITECTURE.md](DOCS/ARCHITECTURE.md)**.
+
+## Repo layout
+
+```
+app/             Next.js App Router (public, protected, api)
+components/      UI components (ui/ = shadcn primitives)
+hooks/           Client hooks
+lib/             Business logic: crypto, memory, OAuth, billing, scheduler
+  supabase/      Supabase client/server/service factories
+handlers/        Thin API handlers shared by route.ts files
+schema/          Canonical SQL + numbered migrations
+supabase/        Edge functions (execute-task)
+scripts/         One-off Node admin scripts
+types/           Shared TS types
+DOCS/            REPO_OVERVIEW, ARCHITECTURE, CHANGELOG, OAuth setup
+middleware.ts    Auth + plan gating
+```
+
+Where to look when changing things → see the lookup table in **[DOCS/ARCHITECTURE.md](DOCS/ARCHITECTURE.md#where-the-code-lives--quick-lookup)**.
+
+## ⚠️ Security note for anyone forking this repo
+
+A previous commit (`66aeb95`) added `.env.local.backup` containing **live secrets**: Supabase service-role key, OpenAI key, Google OAuth secrets, and Lemonsqueezy API key. The file has been removed from the working tree, but **the secrets are still recoverable from git history**. Before publishing:
+
+1. **Rotate** every key that appeared in that file.
+2. **Purge** the blob from history:
+   ```bash
+   git filter-repo --path .env.local.backup --invert-paths
+   git push --force-with-lease
+   ```
+   (or use [BFG](https://rtyley.github.io/bfg-repo-cleaner/))
+3. Confirm `git log --all -- .env.local.backup` returns no matches.
+
+## Roadmap
+
+Tracked in [`Todo.md`](Todo.md). Highlights: migrate legacy RPCs onto the encrypted memories table, replace Lemonsqueezy with PayPal, build out the public-facing pages (terms, privacy, about, contact).
+
+## License
+
+No license file is currently in the repo. Add one (MIT / Apache-2.0 / proprietary) before sharing publicly.
