@@ -22,6 +22,12 @@ export async function middleware(request: NextRequest) {
     '/protected/example'
   ];
 
+  // Routes under /protected that must remain reachable without a subscription,
+  // otherwise the subscription redirect target itself would re-trigger the redirect.
+  const subscriptionExempt = [
+    '/protected/billing',
+  ];
+
   // Define routes that require specific plans
   const planRequirements: Record<string, string> = {
     '/protected/advanced-ai': 'pro',
@@ -29,9 +35,11 @@ export async function middleware(request: NextRequest) {
     '/protected/white-label': 'pro-plus'
   };
 
+  const isExempt = subscriptionExempt.some(route => pathname.startsWith(route));
+
   // Check if current path requires subscription
-  const requiresSubscription = premiumRoutes.some(route => pathname.startsWith(route));
-  const requiredPlan = planRequirements[pathname];
+  const requiresSubscription = !isExempt && premiumRoutes.some(route => pathname.startsWith(route));
+  const requiredPlan = !isExempt ? planRequirements[pathname] : undefined;
 
   if (requiresSubscription || requiredPlan) {
     try {
