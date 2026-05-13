@@ -52,7 +52,7 @@
     "lucide-react": "^0.544.0",
     "marked": "^16.4.0",
     "motion": "^12.23.22",
-    "next": "latest",
+    "next": "15.3.8",
     "next-themes": "^0.4.6",
     "nextjs-toploader": "^3.9.17",
     "openai": "^5.20.2",

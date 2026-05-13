@@ -20,9 +20,9 @@ export default function Demo() {
       <div id="integrations" className="mt-16 scroll-mt-24">
         <Integrations />
       </div>
-      <div id="about" className="scroll-mt-24">
+      {/* <div id="about" className="scroll-mt-24">
         <TracingBeamDemo />
-      </div>
+      </div> */}
       <Testimonials />
       <div id="pricing" className="scroll-mt-24">
         <PricingSection />
