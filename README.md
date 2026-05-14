@@ -13,6 +13,10 @@ Built with Next.js 15, Supabase, and OpenAI. Per-user end-to-end encryption, OAu
 - 💳 **Subscriptions** — plan gating + usage limits powered by Lemonsqueezy webhooks.
 - 🛠️ **Admin / analytics / settings** — full SaaS shell.
 
+<img width="1710" height="951" alt="Screenshot 2026-05-14 at 8 26 03 AM" src="https://github.com/user-attachments/assets/dc709058-36b0-4cd6-a924-50a3bc987618" />
+<img width="1710" height="953" alt="Screenshot 2026-05-14 at 8 25 37 AM" src="https://github.com/user-attachments/assets/40e100e0-d8b7-4b63-b861-cb5aa59a9fb9" />
+
+
 ## Tech stack
 
 - **Framework:** Next.js 15 (App Router, Turbopack) · React 19 · TypeScript
